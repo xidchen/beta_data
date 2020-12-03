@@ -96,6 +96,9 @@ class TokenAndPositionEmbedding(layers.Layer):
 
 
 if __name__ == '__main__':
+    physical_devices = tf.config.list_physical_devices('GPU')
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
     vocabulary_size = 30000  # Only consider the top 30k words
     maxlength = 400  # Only consider the first 400 words of each movie review
     (x_train, y_train), (x_val, y_val) = keras.datasets.imdb.load_data(
