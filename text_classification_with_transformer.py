@@ -25,8 +25,7 @@ class MultiHeadSelfAttention(layers.Layer):
         dim_key = tf.cast(tf.shape(key)[-1], tf.float32)
         scaled_score = score / tf.math.sqrt(dim_key)
         weights = tf.nn.softmax(scaled_score, axis=-1)
-        output = tf.matmul(weights, value)
-        return output, weights
+        return tf.matmul(weights, value)
 
     def separate_heads(self, x, batch_size):
         x = tf.reshape(
@@ -48,7 +47,7 @@ class MultiHeadSelfAttention(layers.Layer):
         value = self.separate_heads(
             value, batch_size
         )  # (batch_size, num_heads, seq_len, projection_dim)
-        attention, weights = self.attention(query, key, value)
+        attention = self.attention(query, key, value)
         attention = tf.transpose(
             attention, perm=[0, 2, 1, 3]
         )  # (batch_size, seq_len, num_heads, projection_dim)
