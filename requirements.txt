@@ -1,4 +1,13 @@
+setuptools
+wheel
+tensorflow
 numpy
 pandas
-tensorflow
+Pillow
+matplotlib
+scipy
+scikit-learn
+tensorflow-hub
+tensorflow-text
+tf-models-official
 transformers
