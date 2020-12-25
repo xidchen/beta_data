@@ -4,7 +4,6 @@ tensorflow
 numpy
 pandas
 Pillow
-matplotlib
 scipy
 scikit-learn
 tensorflow-hub

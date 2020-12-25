@@ -218,11 +218,13 @@ bert_results = bert_model(text_preprocessed)
 
 print(f'Loaded BERT: {tfhub_handle_encoder}')
 print(f'Pooled Output Shape:{bert_results["pooled_output"].shape}')
-# print(f'Pooled Output Values:{bert_results["pooled_output"][0, :1]}')
+print(f'Pooled Output Values:{bert_results["pooled_output"][0, :1]}')
 print(f'Sequence Output Shape:{bert_results["sequence_output"].shape}')
-# print(f'Sequence Output Values:{bert_results["sequence_output"][0, :1]}')
+print(f'Sequence Output Values:{bert_results["sequence_output"][0, :1, :6]}')
 print(f'Encoder Outputs Shape:{bert_results["encoder_outputs"][0].shape}')
-# print(f'Encoder Outputs Values:{bert_results["encoder_outputs"][0][0, :1]}')
+for i in range(2):
+    print(f'Encoder Block {i} Output Values: '
+          f'{bert_results["encoder_outputs"][i][0, :1, :6]}')
 
 
 # Define model
@@ -292,8 +294,8 @@ reloaded_model = tf.saved_model.load(saved_model_path)
 
 def print_my_examples(inputs, results):
     result_for_printing = [
-        f'input: {inputs[i]:<30} : score: {results[i][0]:.6f}'
-        for i in range(len(inputs))]
+        f'input: {inputs[j]:<30} : score: {results[j][0]:.6f}'
+        for j in range(len(inputs))]
     print(*result_for_printing, sep='\n')
     print()
 
