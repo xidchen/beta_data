@@ -5,11 +5,9 @@ import tensorflow_hub as hub
 import tensorflow_text
 from official.nlp import optimization  # to create AdamW optimizer
 
-physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except:
-    pass
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+for device in physical_devices:
+    tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
 tf.constant(0)
 
@@ -47,7 +45,7 @@ test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 
 # Loading models from TensorFlow Hub
 
-bert_model_name = 'small_bert/bert_en_uncased_L-2_H-128_A-2'
+bert_model_name = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
 
 map_name_to_handle = {
     'bert_en_uncased_L-12_H-768_A-12':
@@ -222,7 +220,7 @@ print(f'Pooled Output Values:{bert_results["pooled_output"][0, :1]}')
 print(f'Sequence Output Shape:{bert_results["sequence_output"].shape}')
 print(f'Sequence Output Values:{bert_results["sequence_output"][0, :1, :6]}')
 print(f'Encoder Outputs Shape:{bert_results["encoder_outputs"][0].shape}')
-for i in range(2):
+for i in range(len(bert_results["encoder_outputs"])):
     print(f'Encoder Block {i} Output Values: '
           f'{bert_results["encoder_outputs"][i][0, :1, :6]}')
 
