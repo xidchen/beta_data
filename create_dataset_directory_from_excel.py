@@ -16,21 +16,24 @@ for ds_dir in (train_ds_dir, test_ds_dir):
         shutil.rmtree(ds_dir)
     os.makedirs(ds_dir)
 test_ds_size = 1
+train_copy_size = 10
 
-for index, row in df.iterrows():
+for row_idx, row in df.iterrows():
 
     for ds_dir in (train_ds_dir, test_ds_dir):
         if not os.path.exists(os.path.join(ds_dir, row['label'])):
             os.makedirs(os.path.join(ds_dir, row['label']))
 
-    def write_data_into_dir(dataset_dir):
-        with open(os.path.join(dataset_dir, str(index) + '.txt'),
-                  mode='w', encoding='utf-8') as f:
-            f.write(row['text'])
+    def write_data_into_dir(dataset_dir, copy_size):
+        for copy_idx in range(copy_size):
+            with open(os.path.join(
+                    dataset_dir, '{}_{}.txt'.format(row_idx, copy_idx)),
+                    mode='w', encoding='utf-8') as f:
+                f.write(row['text'])
 
     working_dir = os.path.join(test_ds_dir, row['label'])
     if len(os.listdir(working_dir)) < test_ds_size:
-        write_data_into_dir(working_dir)
+        write_data_into_dir(working_dir, 1)
     else:
         working_dir = os.path.join(train_ds_dir, row['label'])
-        write_data_into_dir(working_dir)
+        write_data_into_dir(working_dir, train_copy_size)

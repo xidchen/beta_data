@@ -10,3 +10,6 @@ tensorflow-hub
 tensorflow-text
 tf-models-official
 transformers
+openpyxl
+xlrd
+xlwt
