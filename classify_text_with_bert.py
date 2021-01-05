@@ -45,7 +45,7 @@ test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 
 # Loading models from TensorFlow Hub
 
-bert_model_name = 'small_bert/bert_en_uncased_L-4_H-512_A-8'
+bert_model_name = 'small_bert/bert_en_uncased_L-6_H-768_A-12'
 
 map_name_to_handle = {
     'bert_en_uncased_L-12_H-768_A-12':
@@ -277,17 +277,17 @@ history = classifier_model.fit(x=train_ds,
                                epochs=epochs)
 
 # Evaluate the model
+print()
+print('Evaluating test data:')
 loss, accuracy = classifier_model.evaluate(test_ds)
-print(f'Loss: {loss}')
-print(f'Accuracy: {accuracy}')
 
 
-# Export for inference
-
-saved_model_path = './imdb_bert'
-classifier_model.save(saved_model_path)
-
-reloaded_model = tf.saved_model.load(saved_model_path)
+# # Export for inference
+#
+# saved_model_path = './imdb_bert'
+# classifier_model.save(saved_model_path)
+#
+# reloaded_model = tf.saved_model.load(saved_model_path)
 
 
 def print_my_examples(inputs, results):
@@ -306,11 +306,11 @@ examples = [
     'The movie was terrible...'
 ]
 
-reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
+# reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
 original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
 
-print('Results from the saved model:')
-print_my_examples(examples, reloaded_results)
+# print('Results from the saved model:')
+# print_my_examples(examples, reloaded_results)
 print('Results from the model in memory:')
 print_my_examples(examples, original_results)
 
