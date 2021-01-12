@@ -105,7 +105,7 @@ def build_classifier_model():
 
 classifier_model = build_classifier_model()
 bert_raw_result = classifier_model(tf.constant(text_test))
-print(tf.sigmoid(bert_raw_result))
+print(f'BERT Output Shape: {tf.sigmoid(bert_raw_result).shape}')
 
 
 # Model training
@@ -151,14 +151,15 @@ loss, accuracy = classifier_model.evaluate(test_ds)
 
 examples = [
     '降息了，该买点什么',  # this is the same sentence tried earlier
-    '百亿爆款基金不断，值得买吗',
     '最近股票涨得挺好，什么原因？',
     '股市跌到底了吗',
-    '中欧蓝筹与华夏大盘，哪个好',
-    '5G主题基金值得买吗',
-    '我买的几只基金怎么跑不过指数',
-    '我买的中欧蓝筹亏了6%了，要不要卖掉',
-    '中欧蓝筹最近一年的业绩排名是什么水平'
+    'ETF和股票基金有啥区别',
+    'ETF和股票指数为啥不一样',
+    'ETF基金有几种分别是啥',
+    'ETF最少能买卖多少',
+    'LOF与ETF有啥区别',
+    'MOM基金与FOF基金相比有什么优势',
+    'QDII基金与国内开放式基金哪个更好',
 ]
 
 

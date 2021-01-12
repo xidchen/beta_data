@@ -8,6 +8,7 @@ data_file_str = os.path.join(data_root_dir, 'demo_beta_text.xlsx')
 df = pd.read_excel(
     data_file_str, header=1, names=['label', 'text'], engine='openpyxl')
 print(df)
+print(f'Unique Labels: {len(df.label.unique())}')
 
 train_ds_dir = os.path.join(data_root_dir, 'train')
 test_ds_dir = os.path.join(data_root_dir, 'test')
@@ -18,22 +19,21 @@ for ds_dir in (train_ds_dir, test_ds_dir):
 test_ds_size = 1
 train_copy_size = 10
 
-for row_idx, row in df.iterrows():
+for label in df.label.unique():
 
-    for ds_dir in (train_ds_dir, test_ds_dir):
-        if not os.path.exists(os.path.join(ds_dir, row['label'])):
-            os.makedirs(os.path.join(ds_dir, row['label']))
-
-    def write_data_into_dir(dataset_dir, copy_size):
-        for copy_idx in range(copy_size):
+    def write_data_into_dir(data, data_index, dataset_dir, copy_size):
+        for copy_index in range(copy_size):
             with open(os.path.join(
-                    dataset_dir, '{}_{}.txt'.format(row_idx, copy_idx)),
+                    dataset_dir, '{}_{}.txt'.format(data_index, copy_index)),
                     mode='w', encoding='utf-8') as f:
-                f.write(row['text'])
+                f.write(data)
 
-    working_dir = os.path.join(test_ds_dir, row['label'])
-    if len(os.listdir(working_dir)) < test_ds_size:
-        write_data_into_dir(working_dir, 1)
-    else:
-        working_dir = os.path.join(train_ds_dir, row['label'])
-        write_data_into_dir(working_dir, train_copy_size)
+    working_df = df.loc[df.label == label].sample(frac=1)
+    for ds_dir in (train_ds_dir, test_ds_dir):
+        os.makedirs(os.path.join(ds_dir, label))
+    working_dir = os.path.join(test_ds_dir, label)
+    for idx, text in working_df.text[:test_ds_size].items():
+        write_data_into_dir(text, idx, working_dir, copy_size=1)
+    working_dir = os.path.join(train_ds_dir, label)
+    for idx, text in working_df.text[test_ds_size:].items():
+        write_data_into_dir(text, idx, working_dir, train_copy_size)
