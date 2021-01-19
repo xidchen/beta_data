@@ -17,7 +17,7 @@ for ds_dir in (train_ds_dir, test_ds_dir):
         shutil.rmtree(ds_dir)
     os.makedirs(ds_dir)
 test_ds_size = 1
-train_copy_size = 10
+train_copy_size = 4
 
 for label in df.label.unique():
 

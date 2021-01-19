@@ -1,5 +1,7 @@
 # Setup
 
+import os
+import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
@@ -140,6 +142,7 @@ history = classifier_model.fit(x=train_ds,
 print()
 print('Evaluating test data:')
 loss, accuracy = classifier_model.evaluate(test_ds)
+print()
 
 
 # # Export for inference
@@ -179,6 +182,28 @@ original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
 # print_my_examples(examples, reloaded_results)
 print('Results from the model in memory:')
 print_my_examples(examples, original_results)
+
+
+# Inference of queries of large scales from an excel file
+
+print('Inference of queries of large scales:')
+
+root_dir = os.path.dirname(os.path.realpath(__file__))
+data_root_dir = os.path.join(root_dir, 'BetaData')
+data_file_str = os.path.join(data_root_dir, 'mydb.combined.xlsx')
+df = pd.read_excel(
+    data_file_str, header=1, names=['text'], engine='openpyxl')
+
+original_results = tf.sigmoid(
+    classifier_model.predict(tf.constant(df.text), batch_size=batch_size))
+df['label'] = [class_names[tf.argmax(original_results[j])]
+               for j in range(len(original_results))]
+print(df)
+
+data_file_str = os.path.join(data_root_dir, 'mydb.prediction.xlsx')
+df.to_excel(data_file_str, header=1, index=False, engine='openpyxl')
+print(f'prediction exported to {data_file_str}')
+print()
 
 
 # Inference of a single query for demo purpose
