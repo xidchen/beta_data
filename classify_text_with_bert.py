@@ -45,7 +45,7 @@ test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 
 # Loading models from TensorFlow Hub
 
-bert_model_name = 'small_bert/bert_en_uncased_L-6_H-768_A-12'
+bert_model_name = 'small_bert/bert_en_uncased_L-2_H-128_A-2'
 
 map_name_to_handle = {
     'bert_en_uncased_L-12_H-768_A-12':
@@ -245,7 +245,7 @@ def build_classifier_model():
 
 classifier_model = build_classifier_model()
 bert_raw_result = classifier_model(tf.constant(text_test))
-print(tf.sigmoid(bert_raw_result))
+print(f'BERT Output Shape: {tf.sigmoid(bert_raw_result).shape}')
 
 
 # Model training
@@ -255,7 +255,7 @@ loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 metrics = tf.metrics.BinaryAccuracy()
 
 # Optimizer
-epochs = 5
+epochs = 1
 steps_per_epoch = tf.data.experimental.cardinality(train_ds).numpy()
 num_train_steps = steps_per_epoch * epochs
 num_warmup_steps = int(.1 * num_train_steps)
@@ -280,14 +280,25 @@ history = classifier_model.fit(x=train_ds,
 print()
 print('Evaluating test data:')
 loss, accuracy = classifier_model.evaluate(test_ds)
+print()
 
 
-# # Export for inference
-#
-# saved_model_path = './imdb_bert'
-# classifier_model.save(saved_model_path)
-#
+# Export for inference
+
+saved_model_path = './imdb_bert'
+classifier_model.save(saved_model_path)
+print(f'model saved to {saved_model_path}')
+print()
+
 # reloaded_model = tf.saved_model.load(saved_model_path)
+
+examples = [
+    'this is such an amazing movie!',  # this is the same sentence tried earlier
+    'The movie was great!',
+    'The movie was meh.',
+    'The movie was okish.',
+    'The movie was terrible...'
+]
 
 
 def print_my_examples(inputs, results):
@@ -297,14 +308,6 @@ def print_my_examples(inputs, results):
     print(*result_for_printing, sep='\n')
     print()
 
-
-examples = [
-    'this is such an amazing movie!',  # this is the same sentence tried earlier
-    'The movie was great!',
-    'The movie was meh.',
-    'The movie was okish.',
-    'The movie was terrible...'
-]
 
 # reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
 original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
