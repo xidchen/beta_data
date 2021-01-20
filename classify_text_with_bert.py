@@ -227,7 +227,6 @@ for i in range(len(bert_results["encoder_outputs"])):
 
 # Define model
 
-# TODO: controlling retracing of tf.function
 def build_classifier_model():
     text_input = tf.keras.layers.Input(
         shape=(), dtype=tf.string, name='text')

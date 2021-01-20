@@ -89,7 +89,6 @@ for i in range(len(bert_results["encoder_outputs"])):
 
 # Define model
 
-# TODO: controlling retracing of tf.function
 def build_classifier_model():
     text_input = tf.keras.layers.Input(
         shape=(), dtype=tf.string, name='text')
@@ -147,8 +146,11 @@ print()
 
 # # Export for inference
 #
+# print('Saving models:')
 # saved_model_path = './beta_bert'
 # classifier_model.save(saved_model_path)
+# print(f'model saved to {saved_model_path}')
+# print()
 #
 # reloaded_model = tf.saved_model.load(saved_model_path)
 
