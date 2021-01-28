@@ -3,6 +3,7 @@ wheel
 tensorflow
 numpy
 pandas
+spacy
 Pillow
 scipy
 scikit-learn
@@ -11,5 +12,3 @@ tensorflow-text
 tf-models-official
 transformers
 openpyxl
-xlrd
-xlwt
