@@ -14,7 +14,7 @@ tf.get_logger().setLevel('ERROR')
 tf.constant(0)
 
 
-# Sentiment analysis
+# Intent recognition
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 batch_size = 32
@@ -48,7 +48,7 @@ for text_batch, label_batch in train_ds.take(1).cache():
 # Loading models from TensorFlow Hub
 
 tfhub_handle_encoder = "https://tfhub.dev/tensorflow/bert_zh_L-12_H-768_A-12/3"
-tfhub_handle_preprocess = "https://tfhub.dev/tensorflow/bert_zh_preprocess/2"
+tfhub_handle_preprocess = "https://tfhub.dev/tensorflow/bert_zh_preprocess/3"
 
 print(f'BERT model selected           : {tfhub_handle_encoder}')
 print(f'Preprocess model auto-selected: {tfhub_handle_preprocess}')
@@ -144,14 +144,14 @@ loss, accuracy = classifier_model.evaluate(test_ds)
 print()
 
 
-# # Export for inference
-#
-# print('Saving models:')
-# saved_model_path = './beta_bert'
-# classifier_model.save(saved_model_path)
-# print(f'model saved to {saved_model_path}')
-# print()
-#
+# Export for inference
+
+print('Saving models:')
+saved_model_path = './beta_bert_intent'
+classifier_model.save(saved_model_path)
+print(f'model saved to {saved_model_path}')
+print()
+
 # reloaded_model = tf.saved_model.load(saved_model_path)
 
 examples = [
