@@ -172,14 +172,14 @@ for sentence_json in short_sentences:
     print(f'Tokens: {[token.text for token in nlp(sentence_json["text"])]}')
     text_preprocessed = bert_preprocess_model([sentence_json["text"]])
     print(f'Ids:    {text_preprocessed["input_word_ids"]}')
-print(f'BERT tokens:  {[t.text for t in nlp("google工程师")]}')
-print(f'BERT Ids:     {bert_preprocess_model(["google工程师"])["input_word_ids"]}')
-print(f'Hub BERT Ids: {hub.KerasLayer(hub.load(tfhub_handle_preprocess).tokenize)(["google工程师"])}')
+test_str = "上海NLP工程师招聘".lower()
+print(f'BERT tokens:  {[t.text for t in nlp(test_str)]}')
+print(f'BERT Ids:     {bert_preprocess_model([test_str])["input_word_ids"]}')
+print(f'Hub BERT Ids: {hub.KerasLayer(hub.load(tfhub_handle_preprocess).tokenize)([test_str])}')
 nlp = spacy.load('zh_core_web_trf')
-spacy_tokens = [t.text for t in nlp("google工程师")]
+spacy_tokens = [t.text for t in nlp(test_str)]
 print(f'spaCy tokens: {spacy_tokens}')
-spacy_tags = offsets_to_biluo_tags(doc=nlp("google工程师"),
-                                   entities=[(6, 9, 'Job')])
+spacy_tags = offsets_to_biluo_tags(doc=nlp(test_str), entities=[(2, 8, 'Job')])
 print(f'spaCy tags:   {spacy_tags}')
 print()
 
