@@ -146,12 +146,12 @@ class BertTokenizer:
         self._tokenizer = tokenizers.BertWordPieceTokenizer(
             vocab=vocab_file, lowercase=lowercase)
 
-    def __call__(self, text):
-        _tokens = self._tokenizer.encode(text)
+    def __call__(self, _text):
+        _tokens = self._tokenizer.encode(_text)
         words, spaces = [], []
-        for i, (text, (start, end)) in enumerate(
+        for i, (_text, (start, end)) in enumerate(
                 zip(_tokens.tokens, _tokens.offsets)):
-            words.append(text)
+            words.append(_text)
             if i < len(_tokens.tokens) - 1:
                 # If next start != current end we assume a space in between
                 next_start, next_end = _tokens.offsets[i + 1]
@@ -168,20 +168,25 @@ print()
 # Align with BERT tokenizer
 """Run TFHub BERT preprocessor, align BILUO lists to BERT ones"""
 print('Align with BERT tokenizer')
+
+
+def preprocess_text_for_bert_tokenizer(_text: str) -> str:
+    replace_dict = {'“': '"',
+                    '”': '"',
+                    '‘': '\'',
+                    '’': '\''}
+    for k, v in replace_dict.items():
+        _text = _text.replace(k, v)
+    return _text.lower()
+
+
 for sentence_json in short_sentences:
-    print(f'Tokens: {[token.text for token in nlp(sentence_json["text"])]}')
+    text = preprocess_text_for_bert_tokenizer(sentence_json["text"])
+    print(f'Tokens: {[token.text for token in nlp(text)]}')
     text_preprocessed = bert_preprocess_model([sentence_json["text"]])
     print(f'Ids:    {text_preprocessed["input_word_ids"]}')
-test_str = "上海NLP工程师招聘".lower()
+test_str = preprocess_text_for_bert_tokenizer("Google是个好公司")
 print(f'BERT tokens:  {[t.text for t in nlp(test_str)]}')
-print(f'BERT Ids:     {bert_preprocess_model([test_str])["input_word_ids"]}')
-print(f'Hub BERT Ids: {hub.KerasLayer(hub.load(tfhub_handle_preprocess).tokenize)([test_str])}')
-nlp = spacy.load('zh_core_web_trf')
-spacy_tokens = [t.text for t in nlp(test_str)]
-print(f'spaCy tokens: {spacy_tokens}')
-spacy_tags = offsets_to_biluo_tags(doc=nlp(test_str), entities=[(2, 8, 'Job')])
-print(f'spaCy tags:   {spacy_tags}')
-print()
 
 
 # Split train, valid and test dataset
