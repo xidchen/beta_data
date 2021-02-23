@@ -120,24 +120,9 @@ print(*short_sentences, sep='\n')
 print()
 
 
-# BILUO transformation
-"""Transform label offsets in json_formatted data to BILUO, 
-and store in tuples in lists"""
-print('BILUO transformation')
-ds_biluo_list = []
-for sentence_json in short_sentences:
-    doc = nlp(sentence_json["text"])
-    tokens = [token.text for token in doc]
-    print(f'Tokens: {tokens}')
-    entities = sentence_json["labels"]
-    tags = offsets_to_biluo_tags(doc=doc, entities=entities)
-    print(f'Tags:   {tags}')
-print()
-
-
-# spaCy with BERT tokenizer
+# BERT tokenizer
 """Run spaCy tokenizer with BertWordPieceTokenizer"""
-print('spaCy with BERT tokenizer')
+print('BERT tokenizer')
 
 
 class BertTokenizer:
@@ -162,15 +147,16 @@ class BertTokenizer:
 
 
 nlp.tokenizer = BertTokenizer(vocab=nlp.vocab, vocab_file=bert_vocab)
+print('Tokenzier : BertWordPieceTokenizer')
 print()
 
 
-# Align with BERT tokenizer
-"""Run TFHub BERT preprocessor, align BILUO lists to BERT ones"""
-print('Align with BERT tokenizer')
+# NER BILUO tagging
+"""BERT NER BILUO tagging"""
+print('NER BILUO tagging')
 
 
-def preprocess_text_for_bert_tokenizer(_text: str) -> str:
+def replace_token_for_bert(_text: str) -> str:
     replace_dict = {'“': '"',
                     '”': '"',
                     '‘': '\'',
@@ -180,13 +166,42 @@ def preprocess_text_for_bert_tokenizer(_text: str) -> str:
     return _text.lower()
 
 
+def biluo_tagging(_entities: [], _tokens: []) -> []:
+    """BERT NER BILUO tagging"""
+    res = []
+    _t_start = 0
+    _e = sorted(_entities, key=lambda _ent: _ent[0])
+    for _t in _tokens:
+        if _t.startswith('##'):
+            _t_end = _t_start + len(_t[2:])
+            res.append('X')
+        else:
+            _t_end = _t_start + len(_t)
+            if not _e:
+                res.append('O')
+            elif _t_start == _e[0][0] and _t_end < _e[0][1]:
+                res.append('B-' + _e[0][2])
+            elif _t_start > _e[0][0] and _t_end < _e[0][1]:
+                res.append('I-' + _e[0][2])
+            elif _t_start > _e[0][0] and _t_end == _e[0][1]:
+                res.append('L-' + _e[0][2])
+                _e.pop(0)
+            elif _t_start == _e[0][0] and _t_end == _e[0][1]:
+                res.append('U-' + _e[0][2])
+                _e.pop(0)
+            elif _t_start < _e[0][0]:
+                res.append('O')
+        _t_start = _t_end
+    return res
+
+
 for sentence_json in short_sentences:
-    text = preprocess_text_for_bert_tokenizer(sentence_json["text"])
-    print(f'Tokens: {[token.text for token in nlp(text)]}')
-    text_preprocessed = bert_preprocess_model([sentence_json["text"]])
-    print(f'Ids:    {text_preprocessed["input_word_ids"]}')
-test_str = preprocess_text_for_bert_tokenizer("Google是个好公司")
-print(f'BERT tokens:  {[t.text for t in nlp(test_str)]}')
+    text = replace_token_for_bert(sentence_json["text"])
+    tokens = [token.text for token in nlp(text)][1:-1]
+    print(f'Tokens: {tokens}')
+    ner_tags = biluo_tagging(sentence_json["labels"], tokens)
+    print(f'Tags:   {list(zip(tokens, ner_tags))}')
+    print()
 
 
 # Split train, valid and test dataset
