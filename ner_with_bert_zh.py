@@ -61,38 +61,38 @@ comma = '，'
 max_length = 120
 
 
-def split_long_sentence(sent: str, max_len: int) -> []:
+def split_long_sentence(_sentence: str, _max_len: int) -> []:
     """Split sentence at Chinese comma if length over max length,
     and keep an overlap as long as possible to maintain coherence"""
-    if len(sent) <= max_len:
-        return [sent]
+    if len(_sentence) <= _max_len:
+        return [_sentence]
     res = []
-    subs = sent.split(comma)
-    subs[:-1] = [s + comma for s in subs[:-1]]
+    subs = _sentence.split(comma)
+    subs[:-1] = [sub + comma for sub in subs[:-1]]
     cur_sent = collections.deque()
     cur_len = 0
     for i in range(len(subs)):
         cur_len += len(subs[i])
-        if cur_len >= max_len and cur_sent:
+        if cur_len >= _max_len and cur_sent:
             res.append(''.join(cur_sent))
         cur_sent.append(subs[i])
-        while cur_len > max_len:
+        while cur_len > _max_len:
             cur_len -= len(cur_sent.popleft())
     if cur_sent:
         res.append(''.join(cur_sent))
     return res
 
 
-def adjust_label_offset(labels: [[int, int, str]], span: [int, int]) -> []:
+def adjust_label_offset(_labels: [[int, int, str]], _span: [int, int]) -> []:
     """Adjust label offsets according to text span in original sentence,
     concretely, select label and adjust its offsets if located in the span."""
     res = []
-    for label in labels:
-        assert type(label[0]) == int
-        assert type(label[1]) == int
-        assert type(label[2]) == str
-        if span[0] <= label[0] and label[1] <= span[1]:
-            res.append([label[0] - span[0], label[1] - span[0], label[2]])
+    for _l in _labels:
+        assert type(_l[0]) == int
+        assert type(_l[1]) == int
+        assert type(_l[2]) == str
+        if _span[0] <= _l[0] and _l[1] <= _span[1]:
+            res.append([_l[0] - _span[0], _l[1] - _span[0], _l[2]])
     return res
 
 
@@ -166,31 +166,61 @@ def replace_token_for_bert(_text: str) -> str:
     return _text.lower()
 
 
-def biluo_tagging(_entities: [], _tokens: []) -> []:
+def bert_biluo_tagging(_text: str, _entities: [], _tokens: []) -> []:
     """BERT NER BILUO tagging"""
     res = []
+    whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
     _t_start = 0
-    _e = sorted(_entities, key=lambda _ent: _ent[0])
-    for _t in _tokens:
+
+    def strip_whitespace(_ents: []) -> []:
+        """Strip whitespace if annotated entities have any on either ends"""
+        for _ent in _ents:
+            for _i in range(_ent[0], _ent[1] - 1, 1):
+                if _i in whitespaces:
+                    _ent[0] += 1
+                else:
+                    break
+            for _i in range(_ent[1] - 1, _ent[0], -1):
+                if _i in whitespaces:
+                    _ent[1] -= 1
+                else:
+                    break
+        return _ents
+
+    _e = sorted(strip_whitespace(_entities))
+
+    def extend_end(_end: int, _idx: int) -> int:
+        """Return end position of continuous token given that of current one
+        _end: end position of current token
+        _idx: index of current token"""
+        for _i in range(_idx + 1, len(_tokens)):
+            if _tokens[_i].startswith('##'):
+                _end += len(_tokens[_i][2:])
+            else:
+                break
+        return _end
+
+    for i, _t in enumerate(_tokens):
         if _t.startswith('##'):
             _t_end = _t_start + len(_t[2:])
             res.append('X')
         else:
             _t_end = _t_start + len(_t)
-            if not _e:
+            if not _e or _t_start < _e[0][0]:
                 res.append('O')
-            elif _t_start == _e[0][0] and _t_end < _e[0][1]:
+            elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                 res.append('B-' + _e[0][2])
-            elif _t_start > _e[0][0] and _t_end < _e[0][1]:
+            elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                 res.append('I-' + _e[0][2])
-            elif _t_start > _e[0][0] and _t_end == _e[0][1]:
+            elif _t_start > _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                 res.append('L-' + _e[0][2])
                 _e.pop(0)
-            elif _t_start == _e[0][0] and _t_end == _e[0][1]:
+            elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                 res.append('U-' + _e[0][2])
                 _e.pop(0)
-            elif _t_start < _e[0][0]:
-                res.append('O')
+        if whitespaces and _t_end == whitespaces[0]:
+            _t_end += 1
+            whitespaces.pop(0)
         _t_start = _t_end
     return res
 
@@ -199,9 +229,19 @@ for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token.text for token in nlp(text)][1:-1]
     print(f'Tokens: {tokens}')
-    ner_tags = biluo_tagging(sentence_json["labels"], tokens)
+    ner_tags = bert_biluo_tagging(text, sentence_json["labels"], tokens)
     print(f'Tags:   {list(zip(tokens, ner_tags))}')
     print()
+
+# # Extra testing
+# s = '上海NLP Engineer招聘'
+# labels = [(2, 14, 'Job')]
+# text = replace_token_for_bert(s)
+# tokens = [token.text for token in nlp(s)][1:-1]
+# print(f'Tokens: {tokens}')
+# ner_tags = bert_biluo_tagging(s, labels, tokens)
+# print(f'Tags:   {list(zip(tokens, ner_tags))}')
+# print()
 
 
 # Split train, valid and test dataset
