@@ -3,15 +3,13 @@
 import collections
 import json
 import os
-import re
 import spacy
 from spacy.tokens import Doc
-from spacy.training import Alignment, offsets_to_biluo_tags
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
 import tokenizers
-from official.nlp import bert, optimization
+from official.nlp import optimization
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in physical_devices:
@@ -57,8 +55,36 @@ print()
 and at Chinese commas if text length over 120, 
 record offsets, and finally store json-formatted data in a list"""
 print('Split long sentences')
+sentence_terminators = ['。', '！', '？']
+lower_quotation_mark = '”'
 comma = '，'
 max_length = 120
+
+
+def split_paragraph(_paragraph: str, _max_len) -> []:
+    """Split paragraph at sentence terminating punctuations"""
+    res = []
+    cache = ''
+    if len(_paragraph) <= _max_len:
+        res.append(_paragraph)
+        return res
+    for _char in _paragraph:
+        if _char in sentence_terminators:
+            cache += _char
+        else:
+            if _char == lower_quotation_mark:
+                if cache[-1] in sentence_terminators:
+                    res.append(cache + _char)
+                    cache = ''
+                else:
+                    cache += _char
+            else:
+                if cache and cache[-1] in sentence_terminators:
+                    res.append(cache)
+                    cache = _char
+                else:
+                    cache += _char
+    return res
 
 
 def split_long_sentence(_sentence: str, _max_len: int) -> []:
@@ -67,19 +93,19 @@ def split_long_sentence(_sentence: str, _max_len: int) -> []:
     if len(_sentence) <= _max_len:
         return [_sentence]
     res = []
-    subs = _sentence.split(comma)
-    subs[:-1] = [sub + comma for sub in subs[:-1]]
-    cur_sent = collections.deque()
-    cur_len = 0
-    for i in range(len(subs)):
-        cur_len += len(subs[i])
-        if cur_len >= _max_len and cur_sent:
-            res.append(''.join(cur_sent))
-        cur_sent.append(subs[i])
-        while cur_len > _max_len:
-            cur_len -= len(cur_sent.popleft())
-    if cur_sent:
-        res.append(''.join(cur_sent))
+    _subs = _sentence.split(comma)
+    _subs[:-1] = [_sub + comma for _sub in _subs[:-1]]
+    _cur_sent = collections.deque()
+    _cur_len = 0
+    for i in range(len(_subs)):
+        _cur_len += len(_subs[i])
+        if _cur_len >= _max_len and _cur_sent:
+            res.append(''.join(_cur_sent))
+        _cur_sent.append(_subs[i])
+        while _cur_len > _max_len:
+            _cur_len -= len(_cur_sent.popleft())
+    if _cur_sent:
+        res.append(''.join(_cur_sent))
     return res
 
 
@@ -99,21 +125,20 @@ def adjust_label_offset(_labels: [[int, int, str]], _span: [int, int]) -> []:
 short_sentences = []
 for sentence_json in original_sentences:
     ssid = 0
-    doc = nlp(sentence_json["text"])
+    original_text = sentence_json["text"]
     original_labels = sentence_json["labels"]
     lsid = sentence_json["id"]
-    for sentence in doc.sents:
-        sentence = str(sentence)
+    for sentence in split_paragraph(original_text, max_length):
         for short_sentence in split_long_sentence(sentence, max_length):
-            span_start = sentence_json["text"].find(short_sentence)
+            span_start = original_text.find(short_sentence)
             span_end = span_start + len(short_sentence)
-            original_span = (span_start, span_end)
+            span_in_origin = (span_start, span_end)
             adjusted_labels = adjust_label_offset(original_labels,
-                                                  original_span)
+                                                  span_in_origin)
             short_sentence_json = {"id": str(lsid) + "-" + str(ssid),
                                    "text": short_sentence,
                                    "labels": adjusted_labels,
-                                   "original_span": original_span}
+                                   "span_in_origin": span_in_origin}
             short_sentences.append(short_sentence_json)
             ssid += 1
 print(*short_sentences, sep='\n')
@@ -160,7 +185,8 @@ def replace_token_for_bert(_text: str) -> str:
     replace_dict = {'“': '"',
                     '”': '"',
                     '‘': '\'',
-                    '’': '\''}
+                    '’': '\'',
+                    '—': '-'}
     for k, v in replace_dict.items():
         _text = _text.replace(k, v)
     return _text.lower()
@@ -228,9 +254,11 @@ def bert_biluo_tagging(_text: str, _entities: [], _tokens: []) -> []:
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token.text for token in nlp(text)][1:-1]
-    print(f'Tokens: {tokens}')
+    # print(f'Tokens: {tokens}')
     ner_tags = bert_biluo_tagging(text, sentence_json["labels"], tokens)
-    print(f'Tags:   {list(zip(tokens, ner_tags))}')
+    # print(f'Tags:   {list(zip(tokens, ner_tags))}')
+    for z in zip(tokens, ner_tags):
+        print(z[0], z[1])
     print()
 
 # # Extra testing
