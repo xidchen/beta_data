@@ -46,7 +46,7 @@ original_sentences = []
 with open(data_file_str, encoding='utf-8') as f:
     for line in f:
         original_sentences.append(json.loads(line))
-print(*original_sentences, sep='\n')
+print(*original_sentences[:1], sep='\n')
 print()
 
 
@@ -61,37 +61,38 @@ comma = '，'
 max_length = 120
 
 
-def split_paragraph(_paragraph: str, _max_len) -> []:
+def split_paragraph(_paragraph: str, _max_len, _split: bool = False) -> []:
     """Split paragraph at sentence terminating punctuations"""
     res = []
-    cache = ''
-    if len(_paragraph) <= _max_len:
-        res.append(_paragraph)
-        return res
-    for _char in _paragraph:
-        if _char in sentence_terminators:
-            cache += _char
-        else:
-            if _char == lower_quotation_mark:
-                if cache[-1] in sentence_terminators:
-                    res.append(cache + _char)
-                    cache = ''
-                else:
-                    cache += _char
+    if _split:
+        cache = ''
+        if len(_paragraph) <= _max_len:
+            res.append(_paragraph)
+            return res
+        for _char in _paragraph:
+            if _char in sentence_terminators:
+                cache += _char
             else:
-                if cache and cache[-1] in sentence_terminators:
-                    res.append(cache)
-                    cache = _char
+                if _char == lower_quotation_mark:
+                    if cache[-1] in sentence_terminators:
+                        res.append(cache + _char)
+                        cache = ''
+                    else:
+                        cache += _char
                 else:
-                    cache += _char
+                    if cache and cache[-1] in sentence_terminators:
+                        res.append(cache)
+                        cache = _char
+                    else:
+                        cache += _char
+    else:
+        res.append(_paragraph)
     return res
 
 
 def split_long_sentence(_sentence: str, _max_len: int) -> []:
     """Split sentence at Chinese comma if length over max length,
     and keep an overlap as long as possible to maintain coherence"""
-    if len(_sentence) <= _max_len:
-        return [_sentence]
     res = []
     _subs = _sentence.split(comma)
     _subs[:-1] = [_sub + comma for _sub in _subs[:-1]]
@@ -141,7 +142,7 @@ for sentence_json in original_sentences:
                                    "span_in_origin": span_in_origin}
             short_sentences.append(short_sentence_json)
             ssid += 1
-print(*short_sentences, sep='\n')
+print(*short_sentences[:1], sep='\n')
 print()
 
 
@@ -251,25 +252,14 @@ def bert_biluo_tagging(_text: str, _entities: [], _tokens: []) -> []:
     return res
 
 
+raw_ds = []
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token.text for token in nlp(text)][1:-1]
-    # print(f'Tokens: {tokens}')
     ner_tags = bert_biluo_tagging(text, sentence_json["labels"], tokens)
-    # print(f'Tags:   {list(zip(tokens, ner_tags))}')
-    for z in zip(tokens, ner_tags):
-        print(z[0], z[1])
-    print()
-
-# # Extra testing
-# s = '上海NLP Engineer招聘'
-# labels = [(2, 14, 'Job')]
-# text = replace_token_for_bert(s)
-# tokens = [token.text for token in nlp(s)][1:-1]
-# print(f'Tokens: {tokens}')
-# ner_tags = bert_biluo_tagging(s, labels, tokens)
-# print(f'Tags:   {list(zip(tokens, ner_tags))}')
-# print()
+    raw_ds.append(list(zip(tokens, ner_tags)))
+print(*raw_ds[:1], sep='\n')
+print()
 
 
 # Split train, valid and test dataset
