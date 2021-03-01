@@ -177,9 +177,10 @@ print('Tokenzier : BertWordPieceTokenizer')
 print()
 
 
-# NER BILUO tagging
-"""BERT NER BILUO tagging"""
-print('NER BILUO tagging')
+# NER tagging
+"""BERT NER tagging"""
+tagging = 'BILUO'
+print(f'BERT NER {tagging} tagging')
 
 
 def replace_token_for_bert(_text: str) -> str:
@@ -193,8 +194,16 @@ def replace_token_for_bert(_text: str) -> str:
     return _text.lower()
 
 
-def bert_biluo_tagging(_text: str, _entities: [], _tokens: []) -> []:
-    """BERT NER BILUO tagging"""
+def ner_tagging(_text: str,
+                _entities: [[int, int, str]],
+                _tokens: [str],
+                _tagging: str) -> []:
+    """BERT NER tagging
+    _text: the original text
+    _entities: the start offset, end offset, and name of entities
+    _tokens: bert tokenized tokens
+    _tagging: tagging method ('IO', 'IOB', 'BILUO')
+    """
     res = []
     whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
     _t_start = 0
@@ -233,18 +242,37 @@ def bert_biluo_tagging(_text: str, _entities: [], _tokens: []) -> []:
             res.append('X')
         else:
             _t_end = _t_start + len(_t)
-            if not _e or _t_start < _e[0][0]:
-                res.append('O')
-            elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
-                res.append('B-' + _e[0][2])
-            elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
-                res.append('I-' + _e[0][2])
-            elif _t_start > _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
-                res.append('L-' + _e[0][2])
-                _e.pop(0)
-            elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
-                res.append('U-' + _e[0][2])
-                _e.pop(0)
+            if _tagging == 'IO':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                    _e.pop(0)
+            if _tagging == 'IOB':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                    _e.pop(0)
+            if _tagging == 'BILUO':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('L-' + _e[0][2])
+                    _e.pop(0)
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('U-' + _e[0][2])
+                    _e.pop(0)
         if whitespaces and _t_end == whitespaces[0]:
             _t_end += 1
             whitespaces.pop(0)
@@ -256,14 +284,15 @@ raw_ds = []
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token.text for token in nlp(text)][1:-1]
-    ner_tags = bert_biluo_tagging(text, sentence_json["labels"], tokens)
+    ner_tags = ner_tagging(text, sentence_json["labels"], tokens, tagging)
     raw_ds.append(list(zip(tokens, ner_tags)))
-print(*raw_ds[:1], sep='\n')
+print(*raw_ds, sep='\n')
 print()
 
 
 # Split train, valid and test dataset
 """Split in memory"""
+
 
 # Augment train and valid dataset
 """Augment in memory"""
