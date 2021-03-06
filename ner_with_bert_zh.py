@@ -3,6 +3,7 @@
 import collections
 import json
 import os
+import random
 import spacy
 from spacy.tokens import Doc
 import tensorflow as tf
@@ -40,7 +41,7 @@ and store json-formatted data in a list"""
 print('Read data file')
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData')
-data_file_str = os.path.join(data_root_dir, 'demo_beta_ner_1.jsonl')
+data_file_str = os.path.join(data_root_dir, 'demo_beta_ner.jsonl')
 
 original_sentences = []
 with open(data_file_str, encoding='utf-8') as f:
@@ -61,7 +62,7 @@ comma = '，'
 max_length = 120
 
 
-def split_paragraph(_paragraph: str, _max_len, _split: bool = False) -> []:
+def split_paragraph(_paragraph: str, _max_len: int, _split: bool = False) -> []:
     """Split paragraph at sentence terminating punctuations"""
     res = []
     if _split:
@@ -179,7 +180,7 @@ print()
 
 # NER tagging
 """BERT NER tagging"""
-tagging = 'BILUO'
+tagging = 'IO'
 print(f'BERT NER {tagging} tagging')
 
 
@@ -206,9 +207,10 @@ def ner_tagging(_text: str,
     """
     res = []
     whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
+    _entities = [list(_entity) for _entity in _entities]
     _t_start = 0
 
-    def strip_whitespace(_ents: []) -> []:
+    def strip_whitespace(_ents: [[int, int, str]]) -> []:
         """Strip whitespace if annotated entities have any on either ends"""
         for _ent in _ents:
             for _i in range(_ent[0], _ent[1] - 1, 1):
@@ -286,18 +288,55 @@ for sentence_json in short_sentences:
     tokens = [token.text for token in nlp(text)][1:-1]
     ner_tags = ner_tagging(text, sentence_json["labels"], tokens, tagging)
     raw_ds.append(list(zip(tokens, ner_tags)))
-print(*raw_ds, sep='\n')
+print(*raw_ds[:1], sep='\n')
+print()
+
+
+# Collect label categories
+"""Collect categories of BILU labels from dataset"""
+
+
+def collect_class_names(_ds: [[(str, str)]]) -> set:
+    _class_names = set()
+    for _token_tags in _ds:
+        for _token_tag in _token_tags:
+            _tag = _token_tag[1]
+            if _tag[0] in 'BILU':
+                _class_names.add(_tag)
+    return _class_names
+
+
+class_names = collect_class_names(raw_ds)
+print(f'Class names: {class_names}')
 print()
 
 
 # Split train, valid and test dataset
 """Split in memory"""
+print(f'Raw dataset size: {len(raw_ds)}')
+random.shuffle(raw_ds)
+test_ds_split = 0.1
+test_ds_size = int(test_ds_split * len(raw_ds))
+test_ds = raw_ds[:test_ds_size]
+raw_train_ds = raw_ds[test_ds_size:]
+val_ds_split = 0.2
+val_ds_size = int(val_ds_split * len(raw_train_ds))
+train_ds = raw_train_ds[val_ds_size:]
+val_ds = raw_train_ds[:val_ds_size]
+print(f'Training set classes: {collect_class_names(train_ds)}')
+print(f'Validation set classes: {collect_class_names(val_ds)}')
+print(f'Test set classes: {collect_class_names(test_ds)}')
+print()
 
 
-# Augment train and valid dataset
+# Augment train dataset
 """Augment in memory"""
-
-# Check everything is right
+train_copy_size = 1
+train_ds *= train_copy_size
+print(f'Training set size: {len(train_ds)}')
+print(f'Validation set size: {len(val_ds)}')
+print(f'Test set size: {len(test_ds)}')
+print()
 
 
 # Training
