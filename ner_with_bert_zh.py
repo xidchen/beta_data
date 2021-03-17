@@ -180,8 +180,8 @@ print()
 
 # NER tagging
 """BERT NER tagging"""
-tagging = 'IO'
-print(f'BERT NER {tagging} tagging')
+scheme = 'IO'
+print(f'BERT NER {scheme} tagging')
 
 
 def replace_token_for_bert(_text: str) -> str:
@@ -195,15 +195,15 @@ def replace_token_for_bert(_text: str) -> str:
     return _text.lower()
 
 
-def ner_tagging(_text: str,
-                _entities: [[int, int, str]],
-                _tokens: [str],
-                _tagging: str) -> []:
-    """BERT NER tagging
+def ner_offset_to_tagging(_text: str,
+                          _entities: [[int, int, str]],
+                          _tokens: [str],
+                          _scheme: str) -> [str]:
+    """BERT NER, transform offsets to tagging
     _text: the original text
     _entities: the start offset, end offset, and name of entities
-    _tokens: bert tokenized tokens
-    _tagging: tagging method ('IO', 'IOB', 'BILUO')
+    _tokens: BERT tokenized tokens
+    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
     """
     res = []
     whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
@@ -244,7 +244,7 @@ def ner_tagging(_text: str,
             res.append('X')
         else:
             _t_end = _t_start + len(_t)
-            if _tagging == 'IO':
+            if _scheme == 'IO':
                 if not _e or _t_start < _e[0][0]:
                     res.append('O')
                 elif _t_start >= _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
@@ -252,7 +252,7 @@ def ner_tagging(_text: str,
                 elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                     res.append('I-' + _e[0][2])
                     _e.pop(0)
-            if _tagging == 'IOB':
+            if _scheme == 'IOB':
                 if not _e or _t_start < _e[0][0]:
                     res.append('O')
                 elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
@@ -262,7 +262,7 @@ def ner_tagging(_text: str,
                 elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                     res.append('I-' + _e[0][2])
                     _e.pop(0)
-            if _tagging == 'BILUO':
+            if _scheme == 'BILUO':
                 if not _e or _t_start < _e[0][0]:
                     res.append('O')
                 elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
@@ -286,7 +286,8 @@ raw_ds = []
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token.text for token in nlp(text)][1:-1]
-    ner_tags = ner_tagging(text, sentence_json["labels"], tokens, tagging)
+    ner_tags = ner_offset_to_tagging(
+        text, sentence_json["labels"], tokens, scheme)
     raw_ds.append(list(zip(tokens, ner_tags)))
 print(*raw_ds[:1], sep='\n')
 print()
@@ -340,6 +341,38 @@ print()
 
 
 # Training
+"""Train NER"""
+class_list = ['O'] + list(class_names) + ['[CLS]', '[SEP]']
+print(class_list)
+
+# Define model
+
+# Loss function
+loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+metrics = tf.metrics.SparseCategoricalAccuracy()
+
+# Optimizer
+epochs = 5
+num_train_steps = len(train_ds) * epochs
+num_warmup_steps = int(.1 * num_train_steps)
+
+init_lr = 3e-5
+optimizer = optimization.create_optimizer(init_lr=init_lr,
+                                          num_train_steps=num_train_steps,
+                                          num_warmup_steps=num_warmup_steps,
+                                          optimizer_type='adamw')
 
 
 # Prediction
+
+def ner_tagging_to_offset(_text: str,
+                          _tokens: [str],
+                          _tagging: [str],
+                          _scheme: str) -> [[int, int, str]]:
+    """BERT NER, transform tagging to offsets
+    _text: the original text
+    _tokens: BERT tokenized tokens, with only first sub-token
+    _tagging: BERT ner tagging predicted
+    _scheme: tagging scheme"""
+    res = []
+    return res
