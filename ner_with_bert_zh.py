@@ -4,13 +4,13 @@ import collections
 import json
 import os
 import random
-import spacy
-from spacy.tokens import Doc
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-import tokenizers
-from official.nlp import optimization
+from official import nlp
+from official.nlp import bert
+import official.nlp.optimization
+import official.nlp.bert.tokenization
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in physical_devices:
@@ -23,7 +23,6 @@ print()
 # NER
 
 # Load spaCy and BERT model
-nlp = spacy.load('zh_core_web_trf')
 tfhub_handle_preprocess = "https://tfhub.dev/tensorflow/bert_zh_preprocess/3"
 tfhub_handle_encoder = "https://tfhub.dev/tensorflow/bert_zh_L-12_H-768_A-12/3"
 print(f'BERT preprocess model : {tfhub_handle_preprocess}')
@@ -150,30 +149,7 @@ print()
 # BERT tokenizer
 """Run spaCy tokenizer with BertWordPieceTokenizer"""
 print('BERT tokenizer')
-
-
-class BertTokenizer:
-    def __init__(self, vocab, vocab_file, lowercase=True):
-        self.vocab = vocab
-        self._tokenizer = tokenizers.BertWordPieceTokenizer(
-            vocab=vocab_file, lowercase=lowercase)
-
-    def __call__(self, _text):
-        _tokens = self._tokenizer.encode(_text)
-        words, spaces = [], []
-        for i, (_text, (start, end)) in enumerate(
-                zip(_tokens.tokens, _tokens.offsets)):
-            words.append(_text)
-            if i < len(_tokens.tokens) - 1:
-                # If next start != current end we assume a space in between
-                next_start, next_end = _tokens.offsets[i + 1]
-                spaces.append(next_start > end)
-            else:
-                spaces.append(True)
-        return Doc(self.vocab, words=words, spaces=spaces)
-
-
-nlp.tokenizer = BertTokenizer(vocab=nlp.vocab, vocab_file=bert_vocab)
+tokenizer = bert.tokenization.FullTokenizer(vocab_file=bert_vocab)
 print('Tokenzier : BertWordPieceTokenizer')
 print()
 
@@ -285,7 +261,7 @@ def ner_offset_to_tagging(_text: str,
 raw_ds = []
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
-    tokens = [token.text for token in nlp(text)][1:-1]
+    tokens = [token for token in tokenizer.tokenize(text)]
     ner_tags = ner_offset_to_tagging(
         text, sentence_json["labels"], tokens, scheme)
     raw_ds.append(list(zip(tokens, ner_tags)))
@@ -357,10 +333,10 @@ num_train_steps = len(train_ds) * epochs
 num_warmup_steps = int(.1 * num_train_steps)
 
 init_lr = 3e-5
-optimizer = optimization.create_optimizer(init_lr=init_lr,
-                                          num_train_steps=num_train_steps,
-                                          num_warmup_steps=num_warmup_steps,
-                                          optimizer_type='adamw')
+optimizer = nlp.optimization.create_optimizer(init_lr=init_lr,
+                                              num_train_steps=num_train_steps,
+                                              num_warmup_steps=num_warmup_steps,
+                                              optimizer_type='adamw')
 
 
 # Prediction
