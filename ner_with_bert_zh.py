@@ -1,5 +1,6 @@
 # Setup
 
+import abc
 import collections
 import json
 import os
@@ -273,18 +274,18 @@ print()
 """Collect categories of BILU labels from dataset"""
 
 
-def collect_class_names(_ds: [[(str, str)]]) -> set:
-    _class_names = set()
+def collect_label_names(_ds: [[(str, str)]]) -> set:
+    _label_names = set()
     for _token_tags in _ds:
         for _token_tag in _token_tags:
             _tag = _token_tag[1]
             if _tag[0] in 'BILU':
-                _class_names.add(_tag)
-    return _class_names
+                _label_names.add(_tag)
+    return _label_names
 
 
-class_names = collect_class_names(raw_ds)
-print(f'Class names: {class_names}')
+label_names = collect_label_names(raw_ds)
+print(f'Class names: {label_names}')
 print()
 
 
@@ -300,11 +301,42 @@ val_ds_split = 0.2
 val_ds_size = int(val_ds_split * len(raw_train_ds))
 train_ds = raw_train_ds[val_ds_size:]
 val_ds = raw_train_ds[:val_ds_size]
-print(f'Training set classes: {collect_class_names(train_ds)}')
-print(f'Validation set classes: {collect_class_names(val_ds)}')
-print(f'Test set classes: {collect_class_names(test_ds)}')
+print(f'Training set classes: {collect_label_names(train_ds)}')
+print(f'Validation set classes: {collect_label_names(val_ds)}')
+print(f'Test set classes: {collect_label_names(test_ds)}')
 print()
 
+
+# Define model
+bert_model = hub.KerasLayer(tfhub_handle_encoder)
+
+
+class BertNer(tf.keras.Model, abc.ABC):
+
+    def __init__(self, float_type, num_labels):
+        super(BertNer, self).__init__()
+        text_input = tf.keras.layers.Input(
+            shape=(), dtype=tf.string, name='text')
+        preprocessing_layer = hub.KerasLayer(
+            tfhub_handle_preprocess, name='preprocessing')
+        encoder_inputs = preprocessing_layer(text_input)
+        encoder = hub.KerasLayer(
+            tfhub_handle_encoder, trainable=True, name='BERT_encoder')
+        outputs = encoder(encoder_inputs)
+        sequence_output = outputs['sequence_output']
+        self.bert = tf.keras.Model(
+            inputs=[text_input], outputs=[sequence_output])
+        initializer = tf.keras.initializers.TruncatedNormal(stddev=.02)
+        self.dropout = tf.keras.layers.Dropout(.1)
+        self.classifier = tf.keras.layers.Dense(num_labels,
+                                                activation='softmax',
+                                                kernel_initializer=initializer,
+                                                name='output',
+                                                dtype=float_type)
+
+
+# Training
+"""Train NER"""
 
 # Augment train dataset
 """Augment in memory"""
@@ -315,28 +347,28 @@ print(f'Validation set size: {len(val_ds)}')
 print(f'Test set size: {len(test_ds)}')
 print()
 
+# Label
+label_list = ['[CLS]', 'O'] + list(label_names) + ['[SEP]']
+label_map = {i: label for i, label in enumerate(label_list, 1)}
+print(label_map)
 
-# Training
-"""Train NER"""
-class_list = ['O'] + list(class_names) + ['[CLS]', '[SEP]']
-print(class_list)
-
-# Define model
+# Define strategy
+strategy = tf.distribute.OneDeviceStrategy(device='/gpu:0')
 
 # Loss function
 loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 metrics = tf.metrics.SparseCategoricalAccuracy()
 
 # Optimizer
-epochs = 5
-num_train_steps = len(train_ds) * epochs
-num_warmup_steps = int(.1 * num_train_steps)
-
+epochs = 3
+batch_size = 32
 init_lr = 3e-5
-optimizer = nlp.optimization.create_optimizer(init_lr=init_lr,
-                                              num_train_steps=num_train_steps,
-                                              num_warmup_steps=num_warmup_steps,
-                                              optimizer_type='adamw')
+steps_per_epoch = int(len(train_ds) / batch_size)
+num_train_steps = steps_per_epoch * epochs
+warmup_steps = int(.1 * num_train_steps)
+optimizer = nlp.optimization.create_optimizer(
+    init_lr, num_train_steps=num_train_steps, num_warmup_steps=warmup_steps)
+print(f'Optimizer: {type(optimizer)}')
 
 
 # Prediction
