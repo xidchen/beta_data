@@ -30,7 +30,8 @@ print(f'BERT preprocess model : {tfhub_handle_preprocess}')
 print(f'BERT encoder model    : {tfhub_handle_encoder}')
 bert_preprocess_model = hub.KerasLayer(tfhub_handle_preprocess)
 bert_model = hub.KerasLayer(tfhub_handle_encoder)
-bert_vocab = bert_model.resolved_object.vocab_file.asset_path.numpy().decode('utf-8')
+bert_vocab = bert_model.resolved_object.vocab_file.asset_path.numpy(
+    ).decode('utf-8')
 print(f'BERT vocab file:      : {bert_vocab}')
 print()
 
@@ -62,7 +63,9 @@ comma = '，'
 max_length = 120
 
 
-def split_paragraph(_paragraph: str, _max_len: int, _split: bool = False) -> []:
+def split_paragraph(_paragraph: str,
+                    _max_len: int,
+                    _split: bool = False) -> []:
     """Split paragraph at sentence terminating punctuations"""
     res = []
     if _split:
@@ -91,7 +94,8 @@ def split_paragraph(_paragraph: str, _max_len: int, _split: bool = False) -> []:
     return res
 
 
-def split_long_sentence(_sentence: str, _max_len: int) -> []:
+def split_long_sentence(_sentence: str,
+                        _max_len: int) -> []:
     """Split sentence at Chinese comma if length over max length,
     and keep an overlap as long as possible to maintain coherence"""
     res = []
@@ -111,7 +115,8 @@ def split_long_sentence(_sentence: str, _max_len: int) -> []:
     return res
 
 
-def adjust_label_offset(_labels: [[int, int, str]], _span: [int, int]) -> []:
+def adjust_label_offset(_labels: [[int, int, str]],
+                        _span: [int, int]) -> []:
     """Adjust label offsets according to text span in original sentence,
     concretely, select label and adjust its offsets if located in the span."""
     res = []
@@ -172,7 +177,23 @@ def replace_token_for_bert(_text: str) -> str:
     return _text.lower()
 
 
-def ner_offset_to_tagging(_text: str,
+def strip_whitespace(_ents: [[int, int, str]], _ws: [int]) -> []:
+    """Strip whitespace if entities have any on either ends"""
+    for _ent in _ents:
+        for _i in range(_ent[0], _ent[1] - 1, 1):
+            if _i in _ws:
+                _ent[0] += 1
+            else:
+                break
+        for _i in range(_ent[1] - 1, _ent[0], -1):
+            if _i in _ws:
+                _ent[1] -= 1
+            else:
+                break
+    return _ents
+
+
+def ner_entity_to_tagging(_text: str,
                           _entities: [[int, int, str]],
                           _tokens: [str],
                           _scheme: str) -> [str]:
@@ -185,24 +206,11 @@ def ner_offset_to_tagging(_text: str,
     res = []
     whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
     _entities = [list(_entity) for _entity in _entities]
+    _e = sorted(strip_whitespace(_entities, whitespaces))
     _t_start = 0
-
-    def strip_whitespace(_ents: [[int, int, str]]) -> []:
-        """Strip whitespace if annotated entities have any on either ends"""
-        for _ent in _ents:
-            for _i in range(_ent[0], _ent[1] - 1, 1):
-                if _i in whitespaces:
-                    _ent[0] += 1
-                else:
-                    break
-            for _i in range(_ent[1] - 1, _ent[0], -1):
-                if _i in whitespaces:
-                    _ent[1] -= 1
-                else:
-                    break
-        return _ents
-
-    _e = sorted(strip_whitespace(_entities))
+    while whitespaces and _t_start == whitespaces[0]:
+        _t_start += 1
+        whitespaces.pop(0)
 
     def extend_end(_end: int, _idx: int) -> int:
         """Return end position of continuous token given that of current one
@@ -252,7 +260,7 @@ def ner_offset_to_tagging(_text: str,
                 elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                     res.append('U-' + _e[0][2])
                     _e.pop(0)
-        if whitespaces and _t_end == whitespaces[0]:
+        while whitespaces and _t_end == whitespaces[0]:
             _t_end += 1
             whitespaces.pop(0)
         _t_start = _t_end
@@ -373,14 +381,82 @@ print(f'Optimizer: {type(optimizer)}')
 
 # Prediction
 
-def ner_tagging_to_offset(_text: str,
+def ner_tagging_to_entity(_text: str,
                           _tokens: [str],
                           _tagging: [str],
                           _scheme: str) -> [[int, int, str]]:
-    """BERT NER, transform tagging to offsets
+    """BERT NER, transform predicted tagging to entity names and types
     _text: the original text
-    _tokens: BERT tokenized tokens, with only first sub-token
-    _tagging: BERT ner tagging predicted
-    _scheme: tagging scheme"""
+    _tokens: BERT tokenized tokens
+    _tagging: predicted NER tagging labels
+    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
+    """
     res = []
+    whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
+    for _i, _t in enumerate(_tokens):
+        if _t.startswith('##'):
+            _tagging.insert(_i, 'X')
+    _e = [0, 0, '']
+    _idx = 0
+    for _i, _t in enumerate(_tagging):
+        if _scheme == 'IO':
+            if _i == 0:
+                if _t.startswith('I-'):
+                    _e = [_idx, 0, _t[2:]]
+            else:
+                if _t.startswith('I-'):
+                    if _tagging[_i - 1].startswith('I-'):
+                        if _t != _tagging[_i - 1]:
+                            _e[1] = _idx
+                            res.append(_e)
+                            _e = [_idx, 0, _t[2:]]
+                    if _tagging[_i - 1] == 'O':
+                        _e = [_idx, 0, _t[2:]]
+                    if _tagging[_i - 1] == 'X':
+                        for _j in range(_i - 2, -1, -1):
+                            if _tagging[_j].startswith('I-'):
+                                if _t != _tagging[_j]:
+                                    _e[1] = _idx
+                                    res.append(_e)
+                                    _e = [_idx, 0, _t[2:]]
+                                break
+                            if _tagging[_j] == 'O':
+                                _e = [_idx, 0, _t[2:]]
+                                break
+                    if _i == len(_tagging) - 1:
+                        _e[1] = _idx + len(_tokens[_i])
+                        res.append(_e)
+                if _t == 'O':
+                    if _tagging[_i - 1].startswith('I-'):
+                        _e[1] = _idx
+                        res.append(_e)
+                        _e = [0, 0, '']
+                    if _tagging[_i - 1] == 'X':
+                        for _j in range(_i - 2, -1, -1):
+                            if _tagging[_j].startswith('I-'):
+                                _e[1] = _idx
+                                res.append(_e)
+                                break
+                            if _tagging[_j] == 'O':
+                                break
+                if _t == 'X':
+                    if _i == len(_tagging) - 1:
+                        if _tagging[_i - 1].startswith('I-'):
+                            _e[1] = _idx + len(_tokens[_i][2:])
+                            res.append(_e)
+                        if _tagging[_i - 1] == 'X':
+                            for _j in range(_i - 2, -1, -1):
+                                if _tagging[_j].startswith('I'):
+                                    _e[1] = _idx
+                                    res.append(_e)
+                                    break
+                                if _tagging[_j] == 'O':
+                                    break
+        _idx += len(_tokens[_i][2:]) \
+            if _tokens[_i].startswith('##') else len(_tokens[_i])
+        while whitespaces and _idx >= whitespaces[0]:
+            whitespaces.pop(0)
+            _idx += 1
+    whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
+    res = strip_whitespace(res, whitespaces)
     return res
