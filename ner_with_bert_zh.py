@@ -271,7 +271,7 @@ raw_ds = []
 for sentence_json in short_sentences:
     text = replace_token_for_bert(sentence_json["text"])
     tokens = [token for token in tokenizer.tokenize(text)]
-    ner_tags = ner_offset_to_tagging(
+    ner_tags = ner_entity_to_tagging(
         text, sentence_json["labels"], tokens, scheme)
     raw_ds.append(list(zip(tokens, ner_tags)))
 print(*raw_ds[:1], sep='\n')
