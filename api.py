@@ -1,5 +1,7 @@
 import flask
 import os
+import json
+import requests
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
@@ -7,6 +9,7 @@ from official.nlp import bert
 import official.nlp.bert.tokenization
 
 import beta_bert
+import beta_code
 
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -30,7 +33,8 @@ def main():
     if q is not None:
         res['status'] = '200 OK'
         intent = intent_classes[tf.argmax(tf.sigmoid(intent_model([q]))[0])]
-        res['intent'] = {'name': intent, 'id': ''}
+        res['intent'] = {'id': intent_name_to_id.get(intent, ''),
+                         'name': intent}
         entities = beta_bert.predict_entities_from_query(
             _ner_model=entity_model,
             _query=q,
@@ -40,9 +44,12 @@ def main():
             _scheme=ner_tagging_scheme)
         res['entities'] = []
         for entity in entities:
-            res['entities'].append({'name': q[entity[0]:entity[1]],
-                                    'type': entity[2],
-                                    'code': ''})
+            e_name = q[entity[0]:entity[1]]
+            e_type = entity[2]
+            e_code = entity_name_to_code.get(e_type).get(e_name, '')
+            res['entities'].append({'code': e_code,
+                                    'name': e_name,
+                                    'type': e_type})
     else:
         res['status'] = '400 Bad Request'
         res['intent'] = {'name': '', 'id': ''}
@@ -81,4 +88,8 @@ if __name__ == '__main__':
                                       _num_labels=num_labels,
                                       _max_seq_len=max_seq_len)
     print('Entity model loaded')
+    intent_name_to_id = beta_code.get_intent_code()
+    entity_name_to_code = {}
+    for i in ['基金产品', '基金经理', '基金公司', '基金主题行业']:
+        entity_name_to_code[i] = beta_code.get_entity_code(i)
     app.run('0.0.0.0')
