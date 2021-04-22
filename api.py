@@ -27,7 +27,7 @@ def main():
     if flask.request.method == 'POST':
         q = flask.request.form.get('q')
     res = {}
-    if q.strip():
+    if q is not None:
         res['status'] = '200 OK'
         intent = intent_classes[tf.argmax(tf.sigmoid(intent_model([q]))[0])]
         res['intent'] = {'name': intent, 'id': ''}
@@ -41,11 +41,12 @@ def main():
         res['entities'] = []
         for entity in entities:
             res['entities'].append({'name': q[entity[0]:entity[1]],
-                                    'type': entity[2]})
+                                    'type': entity[2],
+                                    'code': ''})
     else:
         res['status'] = '400 Bad Request'
         res['intent'] = {'name': '', 'id': ''}
-        res['entities'] = [{'name': '', 'type': ''}]
+        res['entities'] = [{'name': '', 'type': '', 'code': ''}]
     return flask.jsonify(res)
 
 
