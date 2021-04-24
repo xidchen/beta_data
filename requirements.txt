@@ -1,9 +1,9 @@
 pip
 setuptools
 wheel
-tensorflow~=2.4.1
-numpy~=1.19.5
-pandas~=1.2.1
+tensorflow
+numpy
+pandas
 spacy[cuda110,transformers]
 Pillow
 scipy
@@ -12,8 +12,8 @@ tensorflow-hub
 tensorflow-text
 tf-models-official
 tokenizers
-transformers~=4.2.2
+transformers
 openpyxl
-flask~=1.1.2
-requests~=2.25.0
-six~=1.15.0
+flask
+requests
+six

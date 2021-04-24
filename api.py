@@ -46,7 +46,7 @@ def main():
         for entity in entities:
             e_name = q[entity[0]:entity[1]]
             e_type = entity[2]
-            e_code = entity_name_to_code.get(e_type).get(e_name, '')
+            e_code = entity_name_to_code.get(e_type, {}).get(e_name, '')
             res['entities'].append({'code': e_code,
                                     'name': e_name,
                                     'type': e_type})
@@ -59,7 +59,7 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_229'
+    intent_model_path = './beta_bert_intent_238'
     entity_class_path = './entity_classes.txt'
     entity_model_path = './beta_bert_entity_c3_e10_f39_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
@@ -89,7 +89,9 @@ if __name__ == '__main__':
                                       _max_seq_len=max_seq_len)
     print('Entity model loaded')
     intent_name_to_id = beta_code.get_intent_code()
+    print('Intent code loaded')
     entity_name_to_code = {}
     for i in ['基金产品', '基金经理', '基金公司', '基金主题行业']:
         entity_name_to_code[i] = beta_code.get_entity_code(i)
+    print('Entity code loaded')
     app.run('0.0.0.0')
