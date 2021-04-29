@@ -184,7 +184,10 @@ def ner_tagging_to_entity(_text: str,
                                 _e = [_idx, 0, _t[2:]]
                                 break
                     if _i == len(_tagging) - 1:
-                        _e[1] = _idx + len(_tokens[_i])
+                        if _tokens[_i] == '[UNK]':
+                            _e[1] = _idx + 1
+                        else:
+                            _e[1] = _idx + len(_tokens[_i])
                         res.append(_e)
                 if _t == 'O':
                     if _tagging[_i - 1].startswith('I-'):
@@ -212,8 +215,12 @@ def ner_tagging_to_entity(_text: str,
                                     break
                                 if _tagging[_j] == 'O':
                                     break
-        _idx += len(_tokens[_i][2:]) \
-            if _tokens[_i].startswith('##') else len(_tokens[_i])
+        if _tokens[_i].startswith('##'):
+            _idx += len(_tokens[_i][2:])
+        elif _tokens[_i] == '[UNK]':
+            _idx += 1
+        else:
+            _idx += len(_tokens[_i])
         while whitespaces and _idx >= whitespaces[0]:
             whitespaces.pop(0)
             _idx += 1

@@ -228,7 +228,10 @@ def ner_entity_to_tagging(_text: str,
             _t_end = _t_start + len(_t[2:])
             res.append('X')
         else:
-            _t_end = _t_start + len(_t)
+            if _t == '[UNK]':
+                _t_end = _t_start + 1
+            else:
+                _t_end = _t_start + len(_t)
             if _scheme == 'IO':
                 if not _e or _t_start < _e[0][0]:
                     res.append('O')
@@ -380,83 +383,3 @@ print(f'Optimizer: {type(optimizer)}')
 
 
 # Prediction
-
-def ner_tagging_to_entity(_text: str,
-                          _tokens: [str],
-                          _tagging: [str],
-                          _scheme: str) -> [[int, int, str]]:
-    """BERT NER, transform predicted tagging to entity names and types
-    _text: the original text
-    _tokens: BERT tokenized tokens
-    _tagging: predicted NER tagging labels
-    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
-    """
-    res = []
-    whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
-    for _i, _t in enumerate(_tokens):
-        if _t.startswith('##'):
-            _tagging.insert(_i, 'X')
-    _e = [0, 0, '']
-    _idx = 0
-    for _i, _t in enumerate(_tagging):
-        if _scheme == 'IO':
-            if _i == 0:
-                if _t.startswith('I-'):
-                    _e = [_idx, 0, _t[2:]]
-            else:
-                if _t.startswith('I-'):
-                    if _tagging[_i - 1].startswith('I-'):
-                        if _t != _tagging[_i - 1]:
-                            _e[1] = _idx
-                            res.append(_e)
-                            _e = [_idx, 0, _t[2:]]
-                    if _tagging[_i - 1] == 'O':
-                        _e = [_idx, 0, _t[2:]]
-                    if _tagging[_i - 1] == 'X':
-                        for _j in range(_i - 2, -1, -1):
-                            if _tagging[_j].startswith('I-'):
-                                if _t != _tagging[_j]:
-                                    _e[1] = _idx
-                                    res.append(_e)
-                                    _e = [_idx, 0, _t[2:]]
-                                break
-                            if _tagging[_j] == 'O':
-                                _e = [_idx, 0, _t[2:]]
-                                break
-                    if _i == len(_tagging) - 1:
-                        _e[1] = _idx + len(_tokens[_i])
-                        res.append(_e)
-                if _t == 'O':
-                    if _tagging[_i - 1].startswith('I-'):
-                        _e[1] = _idx
-                        res.append(_e)
-                        _e = [0, 0, '']
-                    if _tagging[_i - 1] == 'X':
-                        for _j in range(_i - 2, -1, -1):
-                            if _tagging[_j].startswith('I-'):
-                                _e[1] = _idx
-                                res.append(_e)
-                                break
-                            if _tagging[_j] == 'O':
-                                break
-                if _t == 'X':
-                    if _i == len(_tagging) - 1:
-                        if _tagging[_i - 1].startswith('I-'):
-                            _e[1] = _idx + len(_tokens[_i][2:])
-                            res.append(_e)
-                        if _tagging[_i - 1] == 'X':
-                            for _j in range(_i - 2, -1, -1):
-                                if _tagging[_j].startswith('I'):
-                                    _e[1] = _idx
-                                    res.append(_e)
-                                    break
-                                if _tagging[_j] == 'O':
-                                    break
-        _idx += len(_tokens[_i][2:]) \
-            if _tokens[_i].startswith('##') else len(_tokens[_i])
-        while whitespaces and _idx >= whitespaces[0]:
-            whitespaces.pop(0)
-            _idx += 1
-    whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
-    res = strip_whitespace(res, whitespaces)
-    return res

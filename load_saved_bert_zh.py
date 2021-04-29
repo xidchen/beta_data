@@ -22,15 +22,11 @@ class_names = raw_train_ds.class_names
 
 # Load saved model
 
-saved_model_path = './beta_bert'
+saved_model_path = './beta_bert_intent'
 print(f'Load saved models: {saved_model_path}')
 loaded_model = tf.saved_model.load(saved_model_path)
 
-examples = [
-    '一帖看懂实操分级基金折价套利',
-    '分级基金折价套利流程',
-    '什么是开放式基金份额的转换，有哪些要注意的事项'
-]
+examples = ['招商基金', '新发基金', '什么是开放式基金份额的转换，有哪些要注意的事项']
 df = pd.DataFrame({'input': examples})
 print('Inference of examples:')
 print(df)

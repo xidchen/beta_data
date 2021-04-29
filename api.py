@@ -61,7 +61,7 @@ if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
     intent_model_path = './beta_bert_intent_238'
     entity_class_path = './entity_classes.txt'
-    entity_model_path = './beta_bert_entity_c3_e10_f39_s1_h5'
+    entity_model_path = './beta_bert_entity_c3_t354_e3_f94_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
     ner_tagging_scheme = 'IO'
     max_seq_len = 128
@@ -88,10 +88,13 @@ if __name__ == '__main__':
                                       _num_labels=num_labels,
                                       _max_seq_len=max_seq_len)
     print('Entity model loaded')
-    intent_name_to_id = beta_code.get_intent_code()
+    intent_name_to_id, intent_id_to_name = beta_code.get_intent_code()
     print('Intent code loaded')
     entity_name_to_code = {}
-    for i in ['基金产品', '基金经理', '基金公司', '基金主题行业']:
-        entity_name_to_code[i] = beta_code.get_entity_code(i)
+    for e in entity_classes:
+        try:
+            entity_name_to_code[e] = beta_code.get_entity_code(e)
+        except KeyError:
+            continue
     print('Entity code loaded')
     app.run('0.0.0.0')
