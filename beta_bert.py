@@ -141,6 +141,83 @@ def replace_token_for_bert(_text: str) -> str:
     return _text.lower()
 
 
+def ner_entity_to_tagging(_text: str,
+                          _entities: [[int, int, str]],
+                          _tokens: [str],
+                          _scheme: str) -> [str]:
+    """BERT NER, transform offsets to tagging
+    _text: the original text
+    _entities: the start offset, end offset, and name of entities
+    _tokens: BERT tokenized tokens
+    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
+    """
+    res = []
+    whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
+    _entities = [list(_entity) for _entity in _entities]
+    _e = sorted(strip_whitespace(_entities, whitespaces))
+    _t_start = 0
+    while whitespaces and _t_start == whitespaces[0]:
+        _t_start += 1
+        whitespaces.pop(0)
+
+    def extend_end(_end: int, _idx: int) -> int:
+        """Return end position of continuous token given that of current one
+        _end: end position of current token
+        _idx: index of current token"""
+        for _i in range(_idx + 1, len(_tokens)):
+            if _tokens[_i].startswith('##'):
+                _end += len(_tokens[_i][2:])
+            else:
+                break
+        return _end
+
+    for i, _t in enumerate(_tokens):
+        if _t.startswith('##'):
+            _t_end = _t_start + len(_t[2:])
+            res.append('X')
+        else:
+            if _t == '[UNK]':
+                _t_end = _t_start + 1
+            else:
+                _t_end = _t_start + len(_t)
+            if _scheme == 'IO':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                    _e.pop(0)
+            if _scheme == 'IOB':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                    _e.pop(0)
+            if _scheme == 'BILUO':
+                if not _e or _t_start < _e[0][0]:
+                    res.append('O')
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
+                    res.append('I-' + _e[0][2])
+                elif _t_start > _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('L-' + _e[0][2])
+                    _e.pop(0)
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('U-' + _e[0][2])
+                    _e.pop(0)
+        while whitespaces and _t_end == whitespaces[0]:
+            _t_end += 1
+            whitespaces.pop(0)
+        _t_start = _t_end
+    return res
+
+
 def ner_tagging_to_entity(_text: str,
                           _tokens: [str],
                           _tagging: [str],

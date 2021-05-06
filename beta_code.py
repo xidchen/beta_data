@@ -4,7 +4,7 @@ import requests
 
 def get_intent_code() -> ({}, {}):
     """Fetch Intent API, get mapping of intent name and id"""
-    intent_url = 'http://172.17.13.29:31080/betacorpus/Purposes/all'
+    intent_url = 'https://ws7.betawm.com/betacorpus/api/Purposes/all'
     response = requests.get(intent_url)
     content = response.text
     intent_name_to_id, intent_id_to_name = dict(), dict()
