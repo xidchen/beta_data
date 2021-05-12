@@ -1,7 +1,5 @@
 import flask
 import os
-import json
-import requests
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
@@ -32,7 +30,8 @@ def main():
     res = {}
     if q is not None:
         res['status'] = '200 OK'
-        intent = intent_classes[tf.argmax(tf.sigmoid(intent_model([q]))[0])]
+        intent = intent_classes[tf.argmax(
+            tf.sigmoid(intent_model([tf.constant(q)]))[0])]
         res['intent'] = {'id': intent_name_to_id.get(intent, ''),
                          'name': intent}
         entities = beta_bert.predict_entities_from_query(
@@ -83,6 +82,7 @@ if __name__ == '__main__':
     label_map = {i: label for i, label in enumerate(ner_labels, 1)}
     print(f'Label map: {label_map}')
     intent_model = tf.saved_model.load(intent_model_path)
+    intent_model([tf.constant('0')])
     print('Intent model loaded')
     entity_model = beta_bert.load_ner(_model_dir=entity_model_path,
                                       _num_labels=num_labels,
