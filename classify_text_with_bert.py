@@ -3,13 +3,12 @@
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from official.nlp import optimization  # to create AdamW optimizer
+from official.nlp import optimization
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
+physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
-tf.constant(0)
 
 
 # Sentiment analysis
@@ -286,10 +285,11 @@ print()
 
 saved_model_path = './imdb_bert'
 classifier_model.save(saved_model_path)
+# tf.saved_model.save(classifier_model, saved_model_path)
 print(f'model saved to {saved_model_path}')
 print()
 
-# reloaded_model = tf.saved_model.load(saved_model_path)
+reloaded_model = tf.saved_model.load(saved_model_path)
 
 examples = [
     'this is such an amazing movie!',  # this is the same sentence tried earlier
@@ -301,22 +301,23 @@ examples = [
 
 
 def print_my_examples(inputs, results):
-    result_for_printing = [
-        f'input: {inputs[j]:<30} : score: {results[j][0]:.6f}'
+    result_for_printing = [f'input: {inputs[j]:<30} : score: {results[j][0]:f}'
         for j in range(len(inputs))]
     print(*result_for_printing, sep='\n')
     print()
 
 
 # reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
-original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
+# original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
 
 # print('Results from the saved model:')
 # print_my_examples(examples, reloaded_results)
-print('Results from the model in memory:')
-print_my_examples(examples, original_results)
+# print('Results from the model in memory:')
+# print_my_examples(examples, original_results)
 
-# serving_results = reloaded_model.signatures[
-#     'serving_default'](tf.constant(examples))
-# serving_results = tf.sigmoid(serving_results['classifier'])
-# print_my_examples(examples, serving_results)
+# Serving
+
+serving_results = reloaded_model.signatures['serving_default'](
+    tf.constant(examples))
+serving_results = tf.sigmoid(serving_results['classifier'])
+print_my_examples(examples, serving_results)
