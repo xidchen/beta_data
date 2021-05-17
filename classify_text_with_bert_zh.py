@@ -5,13 +5,12 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from official.nlp import optimization  # to create AdamW optimizer
+from official.nlp import optimization
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
+physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
-tf.constant(0)
 
 
 # Intent recognition
@@ -25,16 +24,18 @@ raw_train_ds = tf.keras.preprocessing.text_dataset_from_directory(
     subset='training', seed=seed)
 
 class_names = raw_train_ds.class_names
+intent_class_path = './intent_classes.txt'
+with open(intent_class_path, mode='w', encoding='utf-8') as f:
+    f.write('\n'.join(class_names))
 train_ds = raw_train_ds.prefetch(buffer_size=AUTOTUNE)
 
-val_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    'BetaData/train', batch_size=batch_size, validation_split=0.2,
-    subset='validation', seed=seed)
+val_ds = tf.keras.preprocessing.text_dataset_from_directory('BetaData/train',
+    batch_size=batch_size, validation_split=0.2, subset='validation', seed=seed)
 
 val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
 
-test_ds = tf.keras.preprocessing.text_dataset_from_directory(
-    'BetaData/test', batch_size=batch_size)
+test_ds = tf.keras.preprocessing.text_dataset_from_directory('BetaData/test',
+    batch_size=batch_size)
 
 test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 

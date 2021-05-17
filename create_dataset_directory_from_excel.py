@@ -28,6 +28,7 @@ for label in df.label.unique():
                     mode='w', encoding='utf-8') as f:
                 f.write(data)
 
+
     working_df = df.loc[df.label == label].sample(frac=1)
     for ds_dir in (train_ds_dir, test_ds_dir):
         os.makedirs(os.path.join(ds_dir, label))
@@ -37,3 +38,5 @@ for label in df.label.unique():
     working_dir = os.path.join(train_ds_dir, label)
     for idx, text in working_df.text[test_ds_size:].items():
         write_data_into_dir(text, idx, working_dir, train_copy_size)
+
+exit(0)

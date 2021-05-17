@@ -22,7 +22,10 @@ def get_entity_code(entity_class: str) -> {}:
     urls['基金产品'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/1'
     urls['基金经理'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/2'
     urls['基金公司'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/3'
+    urls['保险产品'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/4'
     urls['基金主题行业'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/5'
+    urls['保险险种'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/6'
+    urls['保险公司'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/7'
     response = requests.get(urls[entity_class])
     content = response.text
     entity_name_to_code = dict()
