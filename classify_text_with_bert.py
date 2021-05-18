@@ -302,7 +302,7 @@ examples = [
 
 def print_my_examples(inputs, results):
     result_for_printing = [f'input: {inputs[j]:<30} : score: {results[j][0]:f}'
-        for j in range(len(inputs))]
+                           for j in range(len(inputs))]
     print(*result_for_printing, sep='\n')
     print()
 
