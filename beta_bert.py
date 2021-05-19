@@ -19,91 +19,17 @@ def get_ner_labels(_base_labels: [str], _scheme: str) -> [str]:
     return label_names
 
 
-def load_ner(_model_dir: str, _num_labels: int, _max_seq_len: int):
-    _config = json.load(open(os.path.join(_model_dir, "bert_config.json")))
-    _ner = BertNer(_config, tf.float32, _num_labels, _max_seq_len)
-    _ids = tf.ones((1, 128), dtype=tf.int64)
-    _ = _ner(_ids, _ids, _ids, training=False)
-    _ner.load_weights(os.path.join(_model_dir, "model.h5"))
-    return _ner
-
-
-class BertNer(tf.keras.Model, abc.ABC):
-
-    def __init__(self,
-                 model_config: dict,
-                 float_type,
-                 num_labels: int,
-                 max_seq_length: int,
-                 final_layer_initializer=None):
-        """
-        model_config : string or dict (only dict here)
-                    string: bert pretrained model directory
-                      with bert_config.json and bert_model.ckpt
-                    dict: bert model config, pretrained weights are not restored
-        float_type : tf.float32
-        num_labels : num of tags in NER task
-        max_seq_length : max_seq_length of tokens
-        final_layer_initializer : default: tf.keras.initializers.TruncatedNormal
-        """
-        super(BertNer, self).__init__()
-
-        input_word_ids = tf.keras.layers.Input(shape=(max_seq_length,),
-                                               dtype=tf.int32,
-                                               name='input_word_ids')
-        input_mask = tf.keras.layers.Input(shape=(max_seq_length,),
-                                           dtype=tf.int32,
-                                           name='input_mask')
-        input_type_ids = tf.keras.layers.Input(shape=(max_seq_length,),
-                                               dtype=tf.int32,
-                                               name='input_type_ids')
-
-        bert_config = bert_modeling.BertConfig.from_dict(model_config)
-
-        bert_layer = bert_modeling.BertModel(
-            # will change to official.nlp.bert.bert_model
-            config=bert_config, float_type=float_type)
-
-        _, sequence_output = bert_layer(input_word_ids,
-                                        input_mask,
-                                        input_type_ids)
-
-        self.bert = tf.keras.Model(
-            inputs=[input_word_ids, input_mask, input_type_ids],
-            outputs=[sequence_output])
-
-        initializer = tf.keras.initializers.TruncatedNormal(
-            stddev=bert_config.initializer_range) \
-            if final_layer_initializer else final_layer_initializer
-
-        self.dropout = tf.keras.layers.Dropout(
-            rate=bert_config.hidden_dropout_prob)
-        self.classifier = tf.keras.layers.Dense(
-            num_labels,
-            kernel_initializer=initializer,
-            activation='softmax',
-            name='output',
-            dtype=float_type)
-
-    def call(self,
-             input_word_ids,
-             input_mask=None,
-             input_type_ids=None,
-             **kwargs):
-        sequence_output = self.bert(
-            [input_word_ids, input_mask, input_type_ids], **kwargs)
-        sequence_output = self.dropout(sequence_output,
-                                       training=kwargs.get('training', False))
-        logits = self.classifier(sequence_output)
-        return logits
-
-
-def predict_entities_from_query(_ner_model,
-                                _query: str,
-                                _label_map: dict,
-                                _tokenizer,
-                                _max_seq_len: int,
-                                _scheme: str) -> [[int, int, str]]:
+def predict_entities_from_query(_ner, _query: str, _label_map: dict, _tokenizer,
+                                _max_seq_len: int, _scheme: str) -> [
+    [int, int, str]]:
+    """Use BERT NER model to predict entities from a query
+    _ner: loaded BERT NER model, in SavedModel format
+    _query: input query
+    _label_map: mapping dict of label id and name for NER model
+    _tokenizer: BERT tokenizer
+    _max_seq_len: maximum effective sequence length
+    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
+    """
     _query_transcoded = replace_token_for_bert(_query)
     _token_list = _tokenizer.tokenize(_query_transcoded)
     _tokens = []
@@ -119,10 +45,11 @@ def predict_entities_from_query(_ner_model,
     _segment_ids = []
     for x in (_input_ids, _input_mask, _segment_ids):
         x.extend([0] * (_max_seq_len - len(x)))
-    _input_ids = tf.Variable([_input_ids], dtype=tf.int64)
-    _input_mask = tf.Variable([_input_mask], dtype=tf.int64)
-    _segment_ids = tf.Variable([_segment_ids], dtype=tf.int64)
-    _logits = _ner_model(_input_ids, _input_mask, _segment_ids)
+    _input_ids = tf.Variable([_input_ids], dtype=tf.int32)
+    _input_mask = tf.Variable([_input_mask], dtype=tf.int32)
+    _segment_ids = tf.Variable([_segment_ids], dtype=tf.int32)
+    _training = tf.constant(False)
+    _logits = _ner([_input_ids, _input_mask, _segment_ids, _training])
     _logits_label = tf.argmax(_logits, axis=2)
     _logits_label = _logits_label.numpy().tolist()[0]
     _logits_label = _logits_label[1:_tokens.index('[SEP]')]
