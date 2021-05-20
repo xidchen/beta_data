@@ -1,6 +1,8 @@
 import json
 import os
 import random
+import re
+
 import beta_code
 
 entity_class_path = './entity_classes.txt'
@@ -47,9 +49,23 @@ for i, template in enumerate(ner_templates):
                 t_accept = False
                 break
         if t_accept:
+            e_in_t_more_than_once = []
             for (e, e_class) in e_in_t:
-                t_labels.append(
-                    [t_copy.index(e), t_copy.index(e) + len(e), e_class])
+                if t_copy.count(e) == 1:
+                    t_labels.append(
+                        [t_copy.index(e), t_copy.index(e) + len(e), e_class])
+                if t_copy.count(e) > 1:
+                    e_in_t_more_than_once.append((e, e_class))
+            t_labels.sort()
+            for (e, e_class) in e_in_t_more_than_once:
+                for e_span in re.finditer(e, t_copy):
+                    for t_span in t_labels:
+                        if (t_span[0] <= e_span.start() < t_span[1] or
+                                t_span[0] < e_span.end() <= t_span[1]):
+                            break
+                    t_labels.append([e_span.start(), e_span.end(), e_class])
+                    break
+            t_labels.sort()
             ds.append(
                 {'id': start_id + i * copy_size + j, 'text': t_copy, 'meta': {},
                  'annotation approver': None, 'labels': t_labels})
