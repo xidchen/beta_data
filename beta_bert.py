@@ -287,7 +287,7 @@ def ner_tagging_to_entity(_text: str,
                         if _tagging[_i - 1] == 'X':
                             for _j in range(_i - 2, -1, -1):
                                 if _tagging[_j].startswith('I'):
-                                    _e[1] = _idx
+                                    _e[1] = _idx + len(_tokens[_i][2:])
                                     res.append(_e)
                                     break
                                 if _tagging[_j] == 'O':
