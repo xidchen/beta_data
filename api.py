@@ -45,9 +45,15 @@ def main():
             e_name = q[entity[0]:entity[1]]
             e_type = entity[2]
             e_code = entity_name_to_code.get(e_type, {}).get(e_name, '')
-            res['entities'].append({'code': e_code,
-                                    'name': e_name,
-                                    'type': e_type})
+            if isinstance(e_code, str):
+                res['entities'].append(
+                    {'code': e_code, 'name': e_name, 'type': e_type})
+            if isinstance(e_code, list):
+                e_code_list = e_code
+                for e_code in e_code_list:
+                    res['entities'].append(
+                        {'code': e_code, 'name': e_name, 'type': e_type})
+
     else:
         res['status'] = '400 Bad Request'
         res['intent'] = {'name': '', 'id': ''}
@@ -57,9 +63,9 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_324'
+    intent_model_path = './beta_bert_intent_l324_t6281_e5_f80_sm'
     entity_class_path = './entity_classes.txt'
-    entity_model_path = './beta_bert_entity_c3_t748_e3_f99_s1_h5'
+    entity_model_path = './beta_bert_entity_l7_t815_e3_f99_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
     ner_tagging_scheme = 'IO'
     max_seq_len = 128
