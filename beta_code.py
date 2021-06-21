@@ -35,5 +35,12 @@ def get_entity_code(entity_class: str) -> {}:
         e_ids = rs['data']['Id']
         e_names = rs['data']['Name']
         for i in range(len(e_ids)):
-            entity_name_to_code[str(e_names[i])] = str(e_ids[i])
+            e_name = str(e_names[i])
+            if e_name in entity_name_to_code:
+                if isinstance(entity_name_to_code[e_name], str):
+                    entity_name_to_code[e_name] = [entity_name_to_code[e_name]]
+                if isinstance(entity_name_to_code[e_name], list):
+                    entity_name_to_code[e_name].append(str(e_ids[i]))
+            else:
+                entity_name_to_code[e_name] = str(e_ids[i])
     return entity_name_to_code

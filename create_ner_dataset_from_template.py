@@ -60,8 +60,8 @@ for i, template in enumerate(ner_templates):
             for (e, e_class) in e_in_t_more_than_once:
                 for e_span in re.finditer(e, t_copy):
                     for t_span in t_labels:
-                        if (t_span[0] <= e_span.start() < t_span[1] or t_span[
-                            0] < e_span.end() <= t_span[1]):
+                        if (t_span[0] <= e_span.start() < t_span[1] or
+                                t_span[0] < e_span.end() <= t_span[1]):
                             break
                     t_labels.append([e_span.start(), e_span.end(), e_class])
                     break

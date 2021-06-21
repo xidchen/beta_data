@@ -29,13 +29,14 @@ with open(intent_class_path, mode='w', encoding='utf-8') as f:
     f.write('\n'.join(class_names))
 train_ds = raw_train_ds.prefetch(buffer_size=AUTOTUNE)
 
-val_ds = tf.keras.preprocessing.text_dataset_from_directory('BetaData/train',
-    batch_size=batch_size, validation_split=0.2, subset='validation', seed=seed)
+val_ds = tf.keras.preprocessing.text_dataset_from_directory(
+    'BetaData/train', batch_size=batch_size, validation_split=0.2,
+    subset='validation', seed=seed)
 
 val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
 
-test_ds = tf.keras.preprocessing.text_dataset_from_directory('BetaData/test',
-    batch_size=batch_size)
+test_ds = tf.keras.preprocessing.text_dataset_from_directory(
+    'BetaData/test', batch_size=batch_size)
 
 test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 

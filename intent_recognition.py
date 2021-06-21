@@ -8,13 +8,14 @@ physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
+
 # Load intent classes
 saved_class_path = './intent_classes.txt'
 with open(saved_class_path, encoding='utf-8') as f:
     intent_classes = f.read().strip().split('\n')
 
 # Load saved model
-saved_model_path = './beta_bert_intent_238'
+saved_model_path = './beta_bert_intent_l324_t6290_e5_f81_sm'
 saved_model_config = 'bert_zh_L-12_H-768_A-12/3'
 intent_model = tf.saved_model.load(saved_model_path)
 print(f'Model configuration: {saved_model_config}')
@@ -53,7 +54,7 @@ except ValueError:
 
 for i in range(size):
     print(f'Input {i}: ', end='')
-    result = tf.sigmoid(model(tf.constant([input()])))
-    print(f'Class: {class_names[tf.argmax(result[0])]}')
+    result = tf.sigmoid(intent_model(tf.constant([input()])))
+    print(f'Class: {intent_classes[tf.argmax(result[0])]}')
 
 exit(0)
