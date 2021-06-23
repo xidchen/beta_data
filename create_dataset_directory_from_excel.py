@@ -2,11 +2,12 @@ import os
 import pandas as pd
 import shutil
 
+
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData')
 data_file_str = os.path.join(data_root_dir, 'demo_beta_text.xlsx')
 df = pd.read_excel(
-    data_file_str, header=1, names=['label', 'text'], engine='openpyxl')
+    data_file_str, names=['label', 'text'], engine='openpyxl')
 print(df)
 print(f'Unique Labels: {len(df.label.unique())}')
 

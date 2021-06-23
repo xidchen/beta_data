@@ -9,7 +9,6 @@ import official.nlp.bert.tokenization
 import beta_bert
 import beta_code
 
-
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -63,7 +62,7 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_l324_t6290_e5_f81_sm'
+    intent_model_path = './beta_bert_intent_l323_t6300_e5_f85_sm'
     entity_class_path = './entity_classes.txt'
     entity_model_path = './beta_bert_entity_l7_t815_e3_f99_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
