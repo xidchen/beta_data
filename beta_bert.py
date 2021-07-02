@@ -104,8 +104,7 @@ def predict_entities_from_query(_ner_model,
                                 _tokenizer,
                                 _max_seq_len: int,
                                 _scheme: str) -> [[int, int, str]]:
-    _query_transcoded = replace_token_for_bert(_query)
-    _token_list = _tokenizer.tokenize(_query_transcoded)
+    _token_list = _tokenizer.tokenize(_query)
     _tokens = []
     for _token in _token_list:
         if not _token.startswith('##'):
@@ -128,17 +127,6 @@ def predict_entities_from_query(_ner_model,
     _logits_label = _logits_label[1:_tokens.index('[SEP]')]
     _labels = [_label_map[_label] for _label in _logits_label]
     return ner_tagging_to_entity(_query, _token_list, _labels, _scheme)
-
-
-def replace_token_for_bert(_text: str) -> str:
-    replace_dict = {'“': '"',
-                    '”': '"',
-                    '‘': '\'',
-                    '’': '\'',
-                    '—': '-'}
-    for k, v in replace_dict.items():
-        _text = _text.replace(k, v)
-    return _text.lower()
 
 
 def ner_entity_to_tagging(_text: str,

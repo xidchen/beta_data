@@ -7,6 +7,8 @@ import tensorflow_hub as hub
 import tensorflow_text
 from official.nlp import optimization
 
+import beta_utils
+
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
     tf.config.experimental.set_memory_growth(device, True)
@@ -60,10 +62,11 @@ print(f'Preprocess model auto-selected: {tfhub_handle_preprocess}')
 
 bert_preprocess_model = hub.KerasLayer(tfhub_handle_preprocess)
 
-text_test = ['降息了，该买点什么']
-print(text_test)
+text_test = '什么是FOF基金'
+print(f'Text: {text_test}')
+text_test = beta_utils.replace_token_for_bert(text_test)
 
-text_preprocessed = bert_preprocess_model(text_test)
+text_preprocessed = bert_preprocess_model([text_test])
 
 print(f'Keys       : {list(text_preprocessed.keys())}')
 print(f'Shape      : {text_preprocessed["input_word_ids"].shape}')
@@ -75,7 +78,6 @@ print(f'Type Ids   : {text_preprocessed["input_type_ids"][0, :12]}')
 # Using the BERT model
 
 bert_model = hub.KerasLayer(tfhub_handle_encoder)
-
 bert_results = bert_model(text_preprocessed)
 
 print(f'Loaded BERT: {tfhub_handle_encoder}')
@@ -107,7 +109,7 @@ def build_classifier_model():
 
 
 classifier_model = build_classifier_model()
-bert_raw_result = classifier_model(tf.constant(text_test))
+bert_raw_result = classifier_model(tf.constant([text_test]))
 print(f'BERT Output Shape: {tf.sigmoid(bert_raw_result).shape}')
 
 
@@ -118,7 +120,7 @@ loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 metrics = tf.metrics.SparseCategoricalAccuracy()
 
 # Optimizer
-epochs = 5
+epochs = 6
 steps_per_epoch = tf.data.experimental.cardinality(train_ds).numpy()
 num_train_steps = steps_per_epoch * epochs
 num_warmup_steps = int(.1 * num_train_steps)
@@ -156,21 +158,10 @@ print()
 
 # reloaded_model = tf.saved_model.load(saved_model_path)
 
-examples = [
-    '降息了，该买点什么',  # this is the same sentence tried earlier
-    '最近股票涨得挺好，什么原因？',
-    '股市跌到底了吗',
-    'ETF和股票基金有啥区别',
-    'ETF和股票指数为啥不一样',
-    'ETF基金有几种分别是啥',
-    'ETF最少能买卖多少',
-    'LOF与ETF有啥区别',
-    'MOM基金与FOF基金相比有什么优势',
-    'QDII基金与国内开放式基金哪个更好',
-]
 
+# Inference of queries from examples
 
-def print_my_examples(inputs, results):
+def print_my_examples(inputs: [str], results: [float]):
     result_for_printing = [
         'input: {:30} : class: {}'.format(
             inputs[j], class_names[tf.argmax(results[j])])
@@ -179,6 +170,22 @@ def print_my_examples(inputs, results):
     print()
 
 
+examples = [
+    '什么是ETF基金',
+    '什么是FOF基金',
+    '什么是LOF基金',
+    '什么是MOM基金',
+    '什么是QDII基金',
+    '什么是REITS',
+    'ETF基金有几种分别是啥',
+    'ETF最少能买卖多少',
+    'LOF与ETF有啥区别',
+    'MOM基金与FOF基金相比有什么优势',
+    '太平洋证券',
+    '我想了解一下债基',
+]
+
+examples = [beta_utils.replace_token_for_bert(example) for example in examples]
 # reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
 original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
 
@@ -190,39 +197,41 @@ print_my_examples(examples, original_results)
 
 # Inference of queries of large scales from an excel file
 
-print('Inference of queries of large scales:')
+def inference_queries_from_excel():
+    print('Inference of queries of large scales:')
+    root_dir = os.path.dirname(os.path.realpath(__file__))
+    data_root_dir = os.path.join(root_dir, 'BetaData')
+    data_file_str = os.path.join(data_root_dir, 'mydb.combined.xlsx')
+    df = pd.read_excel(data_file_str, names=['text'], engine='openpyxl')
+    df['text'] = [beta_utils.replace_token_for_bert(text)
+                  for text in df['text']]
+    results = tf.sigmoid(
+        classifier_model.predict(
+            tf.constant(df['text']), batch_size=batch_size))
+    df['label'] = [class_names[tf.argmax(results[j])]
+                   for j in range(len(results))]
+    print(df)
+    data_file_str = os.path.join(data_root_dir, 'mydb.prediction.xlsx')
+    df.to_excel(data_file_str, header=1, index=False, engine='openpyxl')
+    print(f'prediction exported to {data_file_str}')
+    print()
 
-root_dir = os.path.dirname(os.path.realpath(__file__))
-data_root_dir = os.path.join(root_dir, 'BetaData')
-data_file_str = os.path.join(data_root_dir, 'mydb.combined.xlsx')
-df = pd.read_excel(
-    data_file_str, header=1, names=['text'], engine='openpyxl')
 
-original_results = tf.sigmoid(
-    classifier_model.predict(tf.constant(df.text), batch_size=batch_size))
-df['label'] = [class_names[tf.argmax(original_results[j])]
-               for j in range(len(original_results))]
-print(df)
-
-data_file_str = os.path.join(data_root_dir, 'mydb.prediction.xlsx')
-df.to_excel(data_file_str, header=1, index=False, engine='openpyxl')
-print(f'prediction exported to {data_file_str}')
-print()
+# inference_queries_from_excel()
 
 
 # Inference of a single query for demo purpose
 
-print('Inference of a query:')
-
-
-def predict_class_of_a_query(query):
-    result = tf.sigmoid(classifier_model(tf.constant(query)))
+def predict_class_of_a_query(query: str):
+    print('Inference of a query:')
+    query = beta_utils.replace_token_for_bert(query)
+    result = tf.sigmoid(classifier_model(tf.constant([query])))
     print('input: {:30} : class: {}'.format(
-        query[0], class_names[tf.argmax(result[0])]))
+        query, class_names[tf.argmax(result[0])]))
     print()
 
 
-input_query = ['中欧蓝筹的申购费率是多少']
+input_query = '什么是FOF基金'
 predict_class_of_a_query(input_query)
 
 
@@ -234,9 +243,10 @@ def predict_class_from_console_inputs():
     size = int(input())
     for j in range(size):
         print('input {}: '.format(j), end='')
-        query = [input()]
-        result = tf.sigmoid(classifier_model(tf.constant(query)))
+        query = input()
+        query = beta_utils.replace_token_for_bert(query)
+        result = tf.sigmoid(classifier_model(tf.constant([query])))
         print('class: {}'.format(class_names[tf.argmax(result[0])]))
 
 
-predict_class_from_console_inputs()
+# predict_class_from_console_inputs()

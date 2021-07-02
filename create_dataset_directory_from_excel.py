@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import shutil
 
+import beta_utils
+
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData')
@@ -27,7 +29,7 @@ for label in df.label.unique():
             with open(os.path.join(
                     dataset_dir, '{}_{}.txt'.format(data_index, copy_index)),
                     mode='w', encoding='utf-8') as f:
-                f.write(data)
+                f.write(beta_utils.replace_token_for_bert(data))
 
     working_df = df.loc[df.label == label].sample(frac=1)
     for ds_dir in (train_ds_dir, test_ds_dir):
