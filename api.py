@@ -8,6 +8,7 @@ import official.nlp.bert.tokenization
 
 import beta_bert
 import beta_code
+import beta_utils
 
 physical_devices = tf.config.list_physical_devices('GPU')
 for device in physical_devices:
@@ -28,6 +29,7 @@ def main():
     res = {}
     if q is not None:
         res['status'] = '200 OK'
+        q = beta_utils.replace_token_for_bert(q)
         intent = intent_classes[tf.argmax(
             tf.sigmoid(intent_model(tf.constant([q])))[0])]
         res['intent'] = {'id': intent_name_to_id.get(intent, ''),
@@ -62,9 +64,9 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_l323_t6300_e5_f85_sm'
+    intent_model_path = './beta_bert_intent_l323_t6800_e6_f87_sm'
     entity_class_path = './entity_classes.txt'
-    entity_model_path = './beta_bert_entity_l7_t815_e3_f99_s1_h5'
+    entity_model_path = './beta_bert_entity_l7_t900_e3_f99_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
     ner_tagging_scheme = 'IO'
     max_seq_len = 128

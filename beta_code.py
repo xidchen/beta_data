@@ -1,6 +1,8 @@
 import json
 import requests
 
+import beta_utils
+
 
 def get_intent_code() -> ({}, {}):
     """Fetch intent API, get mapping of intent name and id"""
@@ -34,7 +36,7 @@ def get_entity_code(entity_class: str) -> {}:
         e_ids = rs['data']['Id']
         e_names = rs['data']['Name']
         for i in range(len(e_ids)):
-            e_name = str(e_names[i])
+            e_name = beta_utils.replace_token_for_bert(str(e_names[i]).strip())
             if e_name in entity_name_to_code:
                 if isinstance(entity_name_to_code[e_name], str):
                     entity_name_to_code[e_name] = [entity_name_to_code[e_name]]
