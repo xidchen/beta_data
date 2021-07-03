@@ -29,7 +29,8 @@ def main():
     res = {}
     if q is not None:
         res['status'] = '200 OK'
-        q = beta_utils.replace_token_for_bert(q)
+        q = beta_utils.replace_token_for_bert(str(q).strip())
+        q = beta_utils.replace_whitespace_in_pattern(q)
         intent = intent_classes[tf.argmax(
             tf.sigmoid(intent_model(tf.constant([q])))[0])]
         res['intent'] = {'id': intent_name_to_id.get(intent, ''),
