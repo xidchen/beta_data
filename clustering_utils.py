@@ -1,6 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
+import shutil
+
+
+root_dir = os.path.dirname(os.path.realpath(__file__))
+data_root_dir = os.path.join(root_dir, 'BetaData')
+fig_ds_dir = os.path.join(data_root_dir, 'fig')
+if os.path.exists(fig_ds_dir):
+    shutil.rmtree(fig_ds_dir)
+os.makedirs(fig_ds_dir)
 
 
 def create_quantiles(_df_column, _num_quantiles):
@@ -100,13 +110,11 @@ def cluster_cardinality(df):
     for kk in range(_k):
         cl_card[kk] = np.sum(df['centroid'] == kk)
     cl_card = cl_card.astype(int)
-    print('Cluster cardinality: ' + str(cl_card))
     plt.figure()
     plt.bar(range(_k), cl_card)
     plt.title('Cluster Cardinality')
     plt.xlabel('Cluster Number: ' + str(0) + ' to ' + str(_k - 1))
     plt.ylabel('Points in Cluster')
-    plt.show()
     return cl_card
 
 
@@ -116,27 +124,27 @@ def cluster_magnitude(df):
     for kk in range(_k):
         idx = np.where(df['centroid'] == kk)[0]
         cl_mag[kk] = np.sum(df.loc[idx, 'pt2centroid'])
-    print('Cluster magnitude: ', cl_mag)
     plt.figure()
     plt.bar(range(_k), cl_mag)
     plt.title('Cluster Magnitude')
     plt.xlabel('Cluster Number: ' + str(0) + ' to ' + str(_k - 1))
     plt.ylabel('Total Point-to-Centroid Distance')
-    plt.show()
     return cl_mag
 
 
 def plot_card_vs_mag(cl_card, cl_mag):
     plt.figure()
     plt.scatter(cl_card, cl_mag)
-    for i in range(len(cl_card)):
+    k = len(cl_card)
+    for i in range(k):
         plt.annotate(str(i), (cl_card[i], cl_mag[i]))
     plt.xlim(xmin=0)
     plt.ylim(ymin=0)
-    plt.title('Magnitude vs Cardinality')
+    plt.title(f'Magnitude vs Cardinality, k = {k}')
     plt.ylabel('Magnitude')
     plt.xlabel('Cardinality')
-    plt.show()
+    plt.savefig(os.path.join(fig_ds_dir, f'cvm_{k}.png'))
+    print(f'Save cvm (k = {k}) to cvm_{k}.png')
 
 
 def cluster_quality_metrics(df):
@@ -154,9 +162,14 @@ def loss_vs_clusters(_kmin, _kmax, _kstep, _df, _feature_cols):
         [_df, _] = kmeans(_df, k, _feature_cols, 0)
         cluster_quality_metrics(_df)
         loss[loss_ctr] = np.sum(_df['pt2centroid'])
+        print(f'Loss[{loss_ctr}] at k = {k}: {loss[loss_ctr]}')
         loss_ctr += 1
+    plt.figure()
     plt.scatter(k_range, loss)
+    for k in range(len(k_range)):
+        plt.annotate(str(k_range[k]), (k_range[k], loss[k]))
     plt.title('Loss vs Clusters Used')
     plt.xlabel('Number of Clusters')
     plt.ylabel('Total Point-to-Centroid Distance')
-    plt.show()
+    plt.savefig(os.path.join(fig_ds_dir, 'lvc.png'))
+    print('Save Loss vs Clusters Used to lvc.png')

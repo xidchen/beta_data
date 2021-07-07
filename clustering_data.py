@@ -64,7 +64,7 @@ def load_choc_data() -> pd.DataFrame:
 def load_beta_user_profile_data() -> pd.DataFrame:
 
     beta_data = pd.read_csv(
-        'D:\\MyDataSets\\beta_data\\beta_user_profile.csv',
+        os.path.join(data_root_dir, 'beta_user_profile.csv'),
         sep=',',
         names=['sex', 'location', 'prod2', 'prod1', 'asset', 'topic'],
         usecols=[1, 2, 3, 4, 5, 6],

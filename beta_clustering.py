@@ -21,7 +21,8 @@ print('Load and clean data')
 
 beta_data = clustering_data.load_beta_user_profile_data()
 original_cols = beta_data.columns.values
-print(f'Count of original rows: {len(beta_data.index)}')  # 11982911
+print(f'Count of original rows: '
+      f'{len(beta_data.index)}')  # 11982911, 15102070
 print()
 
 
@@ -30,25 +31,37 @@ print()
 print('Preprocess data')
 
 beta_data = beta_data[beta_data['sex'] != 3]
-print(f'Count of rows with sex either 1 or 2: '
-      f'{len(beta_data.index)}')  # 11982906
+print(f'Count of rows with sex being 0, 1 or 2: '
+      f'{len(beta_data.index)}')  # 11982906, 15102065
 beta_data = beta_data.dropna(how='all', subset=original_cols[1:])
 print(f'Count of rows with 0 NaN columns excluding sex: '
-      f'{len(beta_data.index)}')  # 10396709
+      f'{len(beta_data.index)}')  # 10396709, 13515868
 print()
 
 for col in original_cols[1:]:
     print(f'Count of rows with NaN {col}: {beta_data[col].isna().sum()}')
-    # location: 156068, prod2: 9713439, prod1: 9713439, asset: 9713439, topic: 9347087
+    # location: 156068, 3035547
+    # prod2: 9713439, 11076505
+    # prod1: 9713439, 11076505
+    # asset: 9713439, 11076505
+    # topic: 9347087, 9707116
 for i in range(5):
     print(f'Count of rows with {i} NaN columns: '
           f'{len(beta_data[beta_data.isna().sum(axis=1) == i].index)}')
-    # 0: 542027, 1: 133334, 2: 7909, 3: 359436, 4: 9354003
+    # 0: 542027, 558915
+    # 1: 133334, 1725851
+    # 2: 7909, 154597
+    # 3: 359436, 368887
+    # 4: 9354003, 10707618
 for i in range(5):
     df = beta_data[beta_data.isna().sum(axis=1) == i]
     print(f'Count of rows with {i} NaN columns excluding location: ', end='')
     print(len(df[df['location'].notna()].index))
-    # 0: 542027, 1: 46620, 2: 0, 3: 359436, 4: 9292558
+    # 0: 542027, 558915
+    # 1: 46620, 47992
+    # 2: 0, 0
+    # 3: 359436, 368887
+    # 4: 9292558, 9504527
 for col in original_cols:
     print(f'Count of unique {col}: {len(set(beta_data[col]))}')
 print()
@@ -73,22 +86,27 @@ for col in ['lng', 'lat']:
     print(f'Datatype of {col}: {beta_data[col].dtypes}')
 for col in ['lng']:
     df = beta_data[beta_data[col].isna()]
-    print(f'Count of rows with NaN lng/lat: {len(df.index)}')  # 882012
+    print(f'Count of rows with NaN lng/lat: '
+          f'{len(df.index)}')  # 882012, 3792693
     df = df.drop(['lng', 'lat'], axis=1)
 for i in range(5):
     print(f'Count of rows with {i} NaN columns excluding NaN lng/lat: '
           f'{len(df[df.isna().sum(axis=1) == i].index)}')
-    # 0: 34196, 1: 89955, 2: 7909, 3: 24703, 4: 725249
+    # 0: 34196, 36349
+    # 1: 89955, 1681290
+    # 2: 7909, 154597
+    # 3: 24703, 25851
+    # 4: 725249, 1894606
 beta_data = beta_data.dropna(subset=['lng', 'lat'])
 beta_data = beta_data.reset_index(drop=True)
-print(f'Count of rows with lng and lat: {len(beta_data.index)}')  # 9514697
+print(f'Count of rows with lng and lat: '
+      f'{len(beta_data.index)}')  # 9514697, 9723175
 print()
 
 
 # Process sex and preference data
 
 print('Process sex and preference data')
-beta_data['sex'] = clustering_utils.min_max_scaler(beta_data['sex'])
 beta_data['sex'] = beta_data['sex'].astype('int').astype('category')
 categorical_cols = np.delete(original_cols, obj=1)
 for col in categorical_cols:
@@ -103,7 +121,8 @@ beta_data = pd.get_dummies(
 print('Backup original and process transformed data')
 beta_data_backup = beta_data[original_cols]
 beta_data = beta_data.drop(original_cols, axis=1).astype('float32')
-print(f'Shape of transformed data: {beta_data.shape}')  # (9514697, 313)
+print(f'Shape of transformed data: '
+      f'{beta_data.shape}')  # (9514697, 313), (9723175, 314)
 print()
 
 
@@ -122,7 +141,7 @@ print()
 # Cluster dataset
 
 print('Cluster dataset')
-k = 5
+k = 10
 print(f'k: {k}')
 beta_feature_cols = beta_data.columns.values
 beta_data['centroid'] = k
@@ -145,6 +164,6 @@ print()
 
 print('Quality metrics for clusters')
 clustering_utils.cluster_quality_metrics(beta_data)
-kmin, kmax, kstep = 5, 50, 1
+kmin, kmax, kstep = 5, 49, 1
 clustering_utils.loss_vs_clusters(
     kmin, kmax, kstep, beta_data, beta_feature_cols)
