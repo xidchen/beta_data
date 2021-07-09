@@ -18,7 +18,7 @@ def get_intent_code() -> ({}, {}):
     return intent_name_to_id, intent_id_to_name
 
 
-def get_entity_code(entity_class: str) -> {}:
+def get_entity_code(entity_class: str) -> ({}, {}):
     """Fetch entity API, get mapping of entity name and code for each class"""
     urls = dict()
     urls['基金产品'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/1'
@@ -30,7 +30,7 @@ def get_entity_code(entity_class: str) -> {}:
     urls['保险公司'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/7'
     response = requests.get(urls[entity_class])
     content = response.text
-    entity_name_to_code = dict()
+    entity_name_to_code, entity_code_to_name = dict(), dict()
     if content:
         rs = json.loads(content)
         e_ids = rs['data']['Id']
@@ -44,4 +44,12 @@ def get_entity_code(entity_class: str) -> {}:
                     entity_name_to_code[e_name].append(str(e_ids[i]))
             else:
                 entity_name_to_code[e_name] = str(e_ids[i])
-    return entity_name_to_code
+            e_id = e_ids[i]
+            if e_id in entity_code_to_name:
+                if isinstance(entity_code_to_name[e_id], str):
+                    entity_code_to_name[e_id] = [entity_code_to_name[e_id]]
+                if isinstance(entity_code_to_name[e_id], list):
+                    entity_code_to_name[e_id].append(str(e_names[i]).strip())
+            else:
+                entity_code_to_name[e_id] = str(e_names[i]).strip()
+    return entity_name_to_code, entity_code_to_name

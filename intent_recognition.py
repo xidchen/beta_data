@@ -95,17 +95,20 @@ def inference_from_examples():
 
     print('Inference from given examples')
     examples = [
-        '什么是ETF基金',
-        '什么是FOF基金',
-        '什么是LOF基金',
-        '什么是MOM基金',
-        '什么是QDII基金',
-        '什么是REITS',
+        'ETF',
+        'FOF',
+        'LOF',
+        'MOM',
+        '军工MOM基金',
+        'QDII',
+        'REITS',
         'ETF基金有几种分别是啥',
-        '天弘',
+        '国寿福',
+        '弘康安弘赢两全',
         '易方达',
+        '交银施罗德',
         '华夏大盘',
-        'Kevin zhou',
+        'Kevin Zhou',
         '004549 009999',
     ]
     intent_model(tf.constant(['0']))

@@ -21,11 +21,13 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
-    q = None
+    q, v = None, None
     if flask.request.method == 'GET':
         q = flask.request.args.get('q')
+        v = flask.request.args.get('v')
     if flask.request.method == 'POST':
         q = flask.request.form.get('q')
+        v = flask.request.form.get('v')
     res = {}
     if q is not None:
         res['status'] = '200 OK'
@@ -33,7 +35,7 @@ def main():
         q = beta_utils.replace_whitespace_in_pattern(q)
         intent = intent_classes[tf.argmax(
             tf.sigmoid(intent_model(tf.constant([q])))[0])]
-        res['intent'] = {'id': intent_name_to_id.get(intent, ''),
+        res['intent'] = {'id': i_name_to_id.get(intent, ''),
                          'name': intent}
         entities = beta_bert.predict_entities_from_query(
             _ner_model=entity_model,
@@ -44,28 +46,40 @@ def main():
             _scheme=ner_tagging_scheme)
         res['entities'] = []
         for entity in entities:
-            e_name = q[entity[0]:entity[1]]
+            e_text = q[entity[0]:entity[1]]
             e_type = entity[2]
-            e_code = entity_name_to_code.get(e_type, {}).get(e_name, '')
+            e_code = e_name_to_code.get(e_type, {}).get(e_text, '')
             if isinstance(e_code, str):
-                res['entities'].append(
-                    {'code': e_code, 'name': e_name, 'type': e_type})
+                if v is None:
+                    res['entities'].append(
+                        {'code': e_code, 'text': e_text, 'type': e_type})
+                else:
+                    e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
+                    res['entities'].append(
+                        {'code': e_code, 'text': e_text, 'type': e_type,
+                         'name': e_name})
             if isinstance(e_code, list):
                 e_code_list = e_code
                 for e_code in e_code_list:
-                    res['entities'].append(
-                        {'code': e_code, 'name': e_name, 'type': e_type})
+                    if v is None:
+                        res['entities'].append(
+                            {'code': e_code, 'text': e_text, 'type': e_type})
+                    else:
+                        e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
+                        res['entities'].append(
+                            {'code': e_code, 'text': e_text, 'type': e_type,
+                             'name': e_name})
 
     else:
         res['status'] = '400 Bad Request'
         res['intent'] = {'name': '', 'id': ''}
-        res['entities'] = [{'name': '', 'type': '', 'code': ''}]
+        res['entities'] = [{'code': '', 'text': '', 'name': '', 'type': '', }]
     return flask.jsonify(res)
 
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_l323_t6800_e6_f87_sm'
+    intent_model_path = './beta_bert_intent_l323_t7000_e6_f84_sm'
     entity_class_path = './entity_classes.txt'
     entity_model_path = './beta_bert_entity_l7_t900_e3_f99_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
@@ -95,12 +109,12 @@ if __name__ == '__main__':
                                       _num_labels=num_labels,
                                       _max_seq_len=max_seq_len)
     print('Entity model loaded')
-    intent_name_to_id, intent_id_to_name = beta_code.get_intent_code()
+    i_name_to_id, _ = beta_code.get_intent_code()
     print('Intent code loaded')
-    entity_name_to_code = {}
+    e_name_to_code, e_code_to_name = {}, {}
     for e in entity_classes:
         try:
-            entity_name_to_code[e] = beta_code.get_entity_code(e)
+            e_name_to_code[e], e_code_to_name[e] = beta_code.get_entity_code(e)
             print(f'Entity {e} code loaded')
         except KeyError:
             print(f'Entity {e} code not loaded')
