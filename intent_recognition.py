@@ -110,6 +110,10 @@ def inference_from_examples():
         '华夏大盘',
         'Kevin Zhou',
         '004549 009999',
+        '兴证全球旗下基金经理',
+        '易方达公司的公募基金经理',
+        '中欧基金的基金经理',
+        '南方高端装备的经理'
     ]
     intent_model(tf.constant(['0']))
     for example in examples:

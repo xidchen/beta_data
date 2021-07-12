@@ -79,7 +79,7 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './beta_bert_intent_l323_t7000_e6_f84_sm'
+    intent_model_path = './beta_bert_intent_l323_t7000_e6_f87_sm'
     entity_class_path = './entity_classes.txt'
     entity_model_path = './beta_bert_entity_l7_t900_e3_f99_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
