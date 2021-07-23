@@ -26,12 +26,6 @@ root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData')
 data_file_str = os.path.join(data_root_dir, 'demo_beta_ner_from_template.jsonl')
 
-e_class_isdigit = '基金产品'
-placeholder_isdigit = '[' + e_class_isdigit + ']'
-t_isdigit = [
-    j.join([placeholder_isdigit] * i) for i in range(2, 6) for j in [' ', ', ']]
-e_isdigit = [e for e in entity_pool[e_class_isdigit] if e.isdigit()]
-
 ds = []
 copy_size = 1000
 start_id = 10000
@@ -41,36 +35,20 @@ for i, template in enumerate(ner_templates):
         t_accept = True
         t_labels = []
         e_in_t = []
-        if t_copy in t_isdigit:
-            e_class = e_class_isdigit
-            placeholder = placeholder_isdigit
+        for e_class in entity_classes:
+            placeholder = '[' + e_class + ']'
             e_in_c = []
             if placeholder in t_copy and e_class in entity_pool:
                 for _ in range(t_copy.count(placeholder)):
-                    entity = random.choice(e_isdigit)
+                    entity = random.choice(entity_pool[e_class])
                     while entity in e_in_c:
-                        entity = random.choice(e_isdigit)
-                    t_copy = t_copy.replace(placeholder_isdigit, entity, 1)
+                        entity = random.choice(entity_pool[e_class])
+                    t_copy = t_copy.replace(placeholder, entity, 1)
                     e_in_c.append(entity)
                     e_in_t.append((entity, e_class))
             if placeholder in t_copy and e_class not in entity_pool:
                 t_accept = False
                 break
-        else:
-            for e_class in entity_classes:
-                placeholder = '[' + e_class + ']'
-                e_in_c = []
-                if placeholder in t_copy and e_class in entity_pool:
-                    for _ in range(t_copy.count(placeholder)):
-                        entity = random.choice(entity_pool[e_class])
-                        while entity in e_in_c:
-                            entity = random.choice(entity_pool[e_class])
-                        t_copy = t_copy.replace(placeholder, entity, 1)
-                        e_in_c.append(entity)
-                        e_in_t.append((entity, e_class))
-                if placeholder in t_copy and e_class not in entity_pool:
-                    t_accept = False
-                    break
         if t_accept:
             e_in_t_more_than_once = []
             for (e, e_class) in e_in_t:

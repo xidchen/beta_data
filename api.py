@@ -32,7 +32,6 @@ def main():
     if q is not None:
         res['status'] = '200 OK'
         q = beta_utils.replace_token_for_bert(str(q).strip())
-        q = beta_utils.replace_whitespace_in_pattern(q)
         intent = intent_classes[tf.argmax(
             tf.sigmoid(intent_model(tf.constant([q])))[0])]
         res['intent'] = {'id': i_name_to_id.get(intent, ''),
@@ -81,9 +80,9 @@ if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
     intent_model_path = './beta_bert_intent_l323_t7000_e6_f85_sm'
     entity_class_path = './entity_classes.txt'
-    entity_model_path = './beta_bert_entity_l7_t900_e3_f99_s1_h5'
+    entity_model_path = './beta_bert_entity_l7_t920_e3_bio_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
-    ner_tagging_scheme = 'IO'
+    ner_tagging_scheme = 'BIO'
     max_seq_len = 128
     tokenizer = bert.tokenization.FullTokenizer(
         os.path.join(entity_model_path, 'vocab.txt'))

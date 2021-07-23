@@ -10,8 +10,8 @@ def get_ner_labels(_base_labels: [str], _scheme: str) -> [str]:
     labels = []
     if _scheme == 'IO':
         labels = [tag + '-' + label for label in _base_labels for tag in 'I']
-    if _scheme == 'IOB':
-        labels = [tag + '-' + label for label in _base_labels for tag in 'IB']
+    if _scheme == 'BIO':
+        labels = [tag + '-' + label for label in _base_labels for tag in 'BI']
     if _scheme == 'BILUO':
         labels = [tag + '-' + label for label in _base_labels for tag in 'BILU']
     label_names = ["[CLS]", "O"] + labels + ["[SEP]"]
@@ -137,7 +137,7 @@ def ner_entity_to_tagging(_text: str,
     _text: the original text
     _entities: the start offset, end offset, and name of entities
     _tokens: BERT tokenized tokens
-    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
+    _scheme: tagging scheme ('IO', 'BIO', 'BILUO')
     """
     res = []
     whitespaces = [i for i, _t in enumerate(_text) if _t == ' ']
@@ -176,11 +176,14 @@ def ner_entity_to_tagging(_text: str,
                 elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
                     res.append('I-' + _e[0][2])
                     _e.pop(0)
-            if _scheme == 'IOB':
+            if _scheme == 'BIO':
                 if not _e or _t_start < _e[0][0]:
                     res.append('O')
                 elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                     res.append('B-' + _e[0][2])
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                    _e.pop(0)
                 elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                     res.append('I-' + _e[0][2])
                 elif _t_start >= _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
@@ -191,6 +194,9 @@ def ner_entity_to_tagging(_text: str,
                     res.append('O')
                 elif _t_start == _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                     res.append('B-' + _e[0][2])
+                elif _t_start == _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
+                    res.append('B-' + _e[0][2])
+                    _e.pop(0)
                 elif _t_start > _e[0][0] and extend_end(_t_end, i) < _e[0][1]:
                     res.append('I-' + _e[0][2])
                 elif _t_start > _e[0][0] and extend_end(_t_end, i) == _e[0][1]:
@@ -214,7 +220,7 @@ def ner_tagging_to_entity(_text: str,
     _text: the original text
     _tokens: BERT tokenized tokens
     _tagging: predicted NER tagging labels
-    _scheme: tagging scheme ('IO', 'IOB', 'BILUO')
+    _scheme: tagging scheme ('IO', 'BIO', 'BILUO')
     """
     res = []
     whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
@@ -275,6 +281,66 @@ def ner_tagging_to_entity(_text: str,
                         if _tagging[_i - 1] == 'X':
                             for _j in range(_i - 2, -1, -1):
                                 if _tagging[_j].startswith('I'):
+                                    _e[1] = _idx + len(_tokens[_i][2:])
+                                    res.append(_e)
+                                    break
+                                if _tagging[_j] == 'O':
+                                    break
+        if _scheme == 'BIO':
+            if _i == 0:
+                if _t.startswith('B-'):
+                    _e = [_idx, 0, _t[2:]]
+            else:
+                if _t.startswith('B-'):
+                    if _tagging[_i - 1].startswith(('B-', 'I-')):
+                        _e[1] = _idx
+                        res.append(_e)
+                        _e = [_idx, 0, _t[2:]]
+                    if _tagging[_i - 1] == 'O':
+                        _e = [_idx, 0, _t[2:]]
+                    if _tagging[_i - 1] == 'X':
+                        for _j in range(_i - 2, -1, -1):
+                            if _tagging[_j].startswith(('B-', 'I-')):
+                                _e[1] = _idx
+                                res.append(_e)
+                                _e = [_idx, 0, _t[2:]]
+                                break
+                            if _tagging[_j] == 'O':
+                                break
+                    if _i == len(_tagging) - 1:
+                        if _tokens[_i] == '[UNK]':
+                            _e[1] = _idx + 1
+                        else:
+                            _e[1] = _idx + len(_tokens[_i])
+                        res.append(_e)
+                if _t.startswith('I-'):
+                    if _i == len(_tagging) - 1:
+                        if _tokens[_i] == '[UNK]':
+                            _e[1] = _idx + 1
+                        else:
+                            _e[1] = _idx + len(_tokens[_i])
+                        res.append(_e)
+                if _t == 'O':
+                    if _tagging[_i - 1].startswith(('B-', 'I-')):
+                        _e[1] = _idx
+                        res.append(_e)
+                        _e = [0, 0, '']
+                    if _tagging[_i - 1] == 'X':
+                        for _j in range(_i - 2, -1, -1):
+                            if _tagging[_j].startswith(('B-', 'I-')):
+                                _e[1] = _idx
+                                res.append(_e)
+                                break
+                            if _tagging[_j] == 'O':
+                                break
+                if _t == 'X':
+                    if _i == len(_tagging) - 1:
+                        if _tagging[_i - 1].startswith(('B-', 'I-')):
+                            _e[1] = _idx + len(_tokens[_i][2:])
+                            res.append(_e)
+                        if _tagging[_i - 1] == 'X':
+                            for _j in range(_i - 2, -1, -1):
+                                if _tagging[_j].startswith(('B-', 'I-')):
                                     _e[1] = _idx + len(_tokens[_i][2:])
                                     res.append(_e)
                                     break

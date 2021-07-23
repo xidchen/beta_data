@@ -4,7 +4,6 @@ wheel
 tensorflow
 numpy
 pandas
-spacy[cuda110,transformers]
 Pillow
 scipy
 scikit-learn
@@ -12,7 +11,6 @@ tensorflow-hub
 tensorflow-text
 tf-models-official
 tokenizers
-transformers
 openpyxl
 flask
 requests
