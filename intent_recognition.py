@@ -95,6 +95,7 @@ def inference_from_examples():
 
     print('Inference from given examples')
     examples = [
+        '富国基金的基金经理',
         '德邦创新资本有限责任公司南京汤山温泉二期',
         '江铜熙金(上海)股权投资',
         '华闻安泰尚孚1号特定多客户资产管理计划',
