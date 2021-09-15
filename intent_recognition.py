@@ -117,7 +117,9 @@ def inference_from_examples():
         '光大永明意外',
         '上海盛世财富五号b款年金',
         '新光海航交通工具意外(b款)',
-        '前海建筑工程人员团体意外'
+        '前海建筑工程人员团体意外',
+        '新能源基金',
+        '最近行情怎么样',
     ]
     intent_model(tf.constant(['0']))
     for example in examples:
