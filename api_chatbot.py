@@ -68,11 +68,8 @@ def main():
                         res['entities'].append(
                             {'code': e_code, 'text': e_text, 'type': e_type,
                              'name': e_name})
-
     else:
         res['status'] = '400 Bad Request'
-        res['intent'] = {'name': '', 'id': ''}
-        res['entities'] = [{'code': '', 'text': '', 'name': '', 'type': '', }]
     return flask.jsonify(res)
 
 
@@ -118,4 +115,4 @@ if __name__ == '__main__':
         except KeyError:
             print(f'Entity {e} code not loaded')
             continue
-    app.run('0.0.0.0')
+    app.run('0.0.0.0', 5000)
