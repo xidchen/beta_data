@@ -23,13 +23,13 @@ app = flask.Flask(__name__)
 def main():
     q, v = None, None
     if flask.request.method == 'GET':
-        q = flask.request.args.get('q')
-        v = flask.request.args.get('v')
+        q = flask.request.args.get('q', '')
+        v = flask.request.args.get('v', '')
     if flask.request.method == 'POST':
-        q = flask.request.form.get('q')
-        v = flask.request.form.get('v')
+        q = flask.request.form.get('q', '')
+        v = flask.request.form.get('v', '')
     res = {}
-    if q is not None:
+    if q:
         res['status'] = '200 OK'
         q = beta_utils.replace_token_for_bert(str(q).strip())
         intent = intent_classes[tf.argmax(
@@ -49,27 +49,28 @@ def main():
             e_type = entity[2]
             e_code = e_name_to_code.get(e_type, {}).get(e_text, '')
             if isinstance(e_code, str):
-                if v is None:
-                    res['entities'].append(
-                        {'code': e_code, 'text': e_text, 'type': e_type})
-                else:
+                if v:
                     e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
                     res['entities'].append(
                         {'code': e_code, 'text': e_text, 'type': e_type,
                          'name': e_name})
+                else:
+                    res['entities'].append(
+                        {'code': e_code, 'text': e_text, 'type': e_type})
             if isinstance(e_code, list):
                 e_code_list = e_code
                 for e_code in e_code_list:
-                    if v is None:
-                        res['entities'].append(
-                            {'code': e_code, 'text': e_text, 'type': e_type})
-                    else:
+                    if v:
                         e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
                         res['entities'].append(
                             {'code': e_code, 'text': e_text, 'type': e_type,
                              'name': e_name})
+                    else:
+                        res['entities'].append(
+                            {'code': e_code, 'text': e_text, 'type': e_type})
     else:
         res['status'] = '400 Bad Request'
+    print(res)
     return flask.jsonify(res)
 
 
