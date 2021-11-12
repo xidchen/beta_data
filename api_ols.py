@@ -1,5 +1,11 @@
 import flask
-import numpy as np
+import tensorflow as tf
+
+physical_devices = tf.config.list_physical_devices('GPU')
+for device in physical_devices:
+    tf.config.experimental.set_memory_growth(device, True)
+tf.get_logger().setLevel('ERROR')
+
 
 app = flask.Flask(__name__)
 
@@ -14,14 +20,15 @@ def main():
         x = flask.request.form.get('x')
         y = flask.request.form.get('y')
     if x and y:
-        x, y = np.array(eval(x)), np.array(eval(y))
+        x = tf.constant(eval(x), dtype=tf.float64)
+        y = tf.constant(eval(y), dtype=tf.float64)
+        y = tf.reshape(y, [len(y), 1])
         try:
-            res = np.linalg.inv(np.transpose(x) @ x) @ np.transpose(x) @ y
-            res = [round(r, 8) for r in res.tolist()]
-        except numpy.linalg.LinAlgError:
-            res = 'Singular Matrix Error'
-        except ValueError:
-            res = 'Input Error'
+            res = tf.linalg.inv(tf.transpose(x) @ x) @ tf.transpose(x) @ y
+            res = tf.reshape(res, [len(res), ])
+            res = [round(r, 8) for r in res.numpy().tolist()]
+        except tf.errors.InvalidArgumentError:
+            res = 'Matrix Op Error'
     else:
         res = '400 Bad Request'
     return flask.jsonify(res)
