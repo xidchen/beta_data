@@ -53,3 +53,21 @@ def get_entity_code(entity_class: str) -> ({}, {}):
             else:
                 entity_code_to_name[e_id] = str(e_names[i]).strip()
     return entity_name_to_code, entity_code_to_name
+
+
+def get_perspective_code(event_classes: []) -> ({}, {}):
+    """Fetch wp API, get mapping of wp name and id"""
+    wp_url = 'https://as2.betawm.com/Beta.BigDataTagAPI/api/event/tree'
+    response = requests.get(wp_url)
+    content = response.text
+    wp_name_to_id, wp_id_to_name = {}, {}
+    if content:
+        rs = json.loads(content)
+        for i, n1 in enumerate(rs['Data']['Nodes']):
+            if i in event_classes:
+                for n2 in n1['Nodes']:
+                    for n3 in n2['Nodes']:
+                        for n4 in n3['Nodes']:
+                            wp_name_to_id[str(n4['Name'])] = str(n4['Id'])
+                            wp_id_to_name[str(n4['Id'])] = str(n4['Name'])
+    return wp_name_to_id, wp_id_to_name
