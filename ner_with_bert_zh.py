@@ -1,7 +1,6 @@
 # Setup
 
 import abc
-import collections
 import json
 import os
 import random
@@ -14,6 +13,7 @@ import official.nlp.optimization
 import official.nlp.bert.tokenization
 
 import beta_bert
+import beta_utils
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in physical_devices:
@@ -58,64 +58,7 @@ print()
 and at Chinese commas if text length over 120, 
 record offsets, and finally store json-formatted data in a list"""
 print('Split long sentences')
-sentence_terminators = ['。', '！', '？']
-lower_quotation_mark = '”'
-comma = '，'
 max_length = 120
-
-
-def split_paragraph(_paragraph: str,
-                    _max_len: int,
-                    _split: bool = False) -> [str]:
-    """Split paragraph at sentence terminating punctuations"""
-    res = []
-    if _split:
-        cache = ''
-        if len(_paragraph) <= _max_len:
-            res.append(_paragraph)
-            return res
-        for _char in _paragraph:
-            if _char in sentence_terminators:
-                cache += _char
-            else:
-                if _char == lower_quotation_mark:
-                    if cache[-1] in sentence_terminators:
-                        res.append(cache + _char)
-                        cache = ''
-                    else:
-                        cache += _char
-                else:
-                    if cache and cache[-1] in sentence_terminators:
-                        res.append(cache)
-                        cache = _char
-                    else:
-                        cache += _char
-        if cache:
-            res.append(cache)
-    else:
-        res.append(_paragraph)
-    return res
-
-
-def split_long_sentence(_sentence: str,
-                        _max_len: int) -> []:
-    """Split sentence at Chinese comma if length over max length,
-    and keep an overlap as long as possible to maintain coherence"""
-    res = []
-    _subs = _sentence.split(comma)
-    _subs[:-1] = [_sub + comma for _sub in _subs[:-1]]
-    _cur_sent = collections.deque()
-    _cur_len = 0
-    for i in range(len(_subs)):
-        _cur_len += len(_subs[i])
-        if _cur_len >= _max_len and _cur_sent:
-            res.append(''.join(_cur_sent))
-        _cur_sent.append(_subs[i])
-        while _cur_len > _max_len:
-            _cur_len -= len(_cur_sent.popleft())
-    if _cur_sent:
-        res.append(''.join(_cur_sent))
-    return res
 
 
 def adjust_label_offset(_labels: [[int, int, str]],
@@ -138,8 +81,9 @@ for sentence_json in original_sentences:
     original_text = sentence_json["text"]
     original_labels = sentence_json["labels"]
     lsid = sentence_json["id"]
-    for sentence in split_paragraph(original_text, max_length):
-        for short_sentence in split_long_sentence(sentence, max_length):
+    for sentence in beta_utils.split_paragraph(original_text, max_length):
+        for short_sentence in beta_utils.split_long_sentence(
+                sentence, max_length):
             span_start = original_text.find(short_sentence)
             span_end = span_start + len(short_sentence)
             span_in_origin = (span_start, span_end)
