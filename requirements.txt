@@ -10,7 +10,6 @@ scikit-learn
 tensorflow-hub
 tensorflow-text
 tf-models-official
-tokenizers
 openpyxl
 flask
 requests
