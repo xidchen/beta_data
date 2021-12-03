@@ -55,7 +55,8 @@ def main():
 if __name__ == '__main__':
     useml_embed = hub.load("https://tfhub.dev/google/"
                            "universal-sentence-encoder-multilingual-large/3")
-    wp_name_to_id, wp_id_to_name = beta_code.get_perspective_code([0, 1])
+    wp_name_and_id, wp_to_event = beta_code.get_perspective_and_event([0, 1])
+    wp_name_to_id, wp_id_to_name = wp_name_and_id
     wp_names = [wp_name for wp_name in wp_id_to_name.values()]
     wp_embeds = useml_embed(wp_names)
     app.run('0.0.0.0', 5100)

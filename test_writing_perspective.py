@@ -6,6 +6,8 @@ import random
 import requests
 import shutil
 
+import beta_code
+
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData')
@@ -33,15 +35,21 @@ df_human['perspectives human labeled'] = [
     eval(_pd) for _pd in df_human['perspectives human labeled']]
 df = df.merge(df_human, how='left')
 
+wp_to_event = beta_code.get_perspective_and_event([0, 1])[1]
+
 
 def get_p_r_f_col(_df: pd.DataFrame, _c1: str, _c2: str) -> ([], []):
+    _to_event = True
     _ps, _rs, _fs = [], [], []
     for _i in _df.index:
         _pl1, _pl2 = [], []
         for _p in _df.loc[_i, _c1]['perspectives']:
-            _pl1.append(_p['name'])
+            _name = wp_to_event[_p['name']] if _to_event else _p['name']
+            _pl1.append(_name)
         for _p in _df.loc[_i, _c2]['perspectives']:
-            _pl2.append(_p['name'])
+            _name = wp_to_event[_p['name']] if _to_event else _p['name']
+            _pl2.append(_name)
+        _pl1, _pl2 = list(set(_pl1)), list(set(_pl2))
         __p = len([_p for _p in _pl2 if _p in _pl1]) / len(_pl2) if _pl2 else 0
         _ps.append(__p)
         __r = len([_p for _p in _pl1 if _p in _pl2]) / len(_pl1) if _pl1 else 0
@@ -69,4 +77,4 @@ df['p_t_and_a'], df['r_t_and_a'], df['f_t_and_a'] = get_p_r_f_col(
     df, 'perspectives human labeled', 'perspectives considering t and a')
 
 df.to_excel(os.path.join(data_root_dir, 'wp_xlsx', 'wp_evaluation.xlsx'),
-            index=None, engine='openpyxl')
+            index=None, engine='openpyxl', freeze_panes=(1, 1))
