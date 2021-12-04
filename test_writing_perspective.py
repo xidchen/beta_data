@@ -28,11 +28,11 @@ for dirpath, dirs, files in os.walk(os.path.join(data_root_dir, 'wp_txt')):
                 article_dict[file] = f.read().strip()
 df['article'] = [article_dict[title] for title in df['title']]
 
+phl = 'perspectives human labeled'
 df_human = pd.read_excel(
     os.path.join(data_root_dir, 'wp_xlsx', 'wp_human_labeled_integrated.xlsx'),
-    names=['title', 'perspectives human labeled'], engine='openpyxl')
-df_human['perspectives human labeled'] = [
-    eval(_pd) for _pd in df_human['perspectives human labeled']]
+    names=['title', phl], engine='openpyxl')
+df_human[phl] = [eval(_pd) for _pd in df_human[phl]]
 df = df.merge(df_human, how='left')
 
 wp_to_event = beta_code.get_perspective_and_event([0, 1])[1]
@@ -60,21 +60,27 @@ def get_p_r_f_col(_df: pd.DataFrame, _c1: str, _c2: str) -> ([], []):
 
 
 url = 'http://172.17.12.57:5100'
-df['perspectives considering only title'] = [
+pcot = 'perspectives considering only title'
+pcoa = 'perspectives considering only article'
+pcta = 'perspectives considering t and a'
+pot, rot, fot = 'p_only_title', 'r_only_title', 'f_only_title'
+poa, roa, foa = 'p_only_artile', 'r_only_artile', 'f_only_article'
+pta, rta, fta = 'p_t_and_a', 'r_t_and_a', 'f_t_and_a'
+df[pcot] = [
     json.loads(requests.post(url, data={'t': title}).text)
     for title in df['title']]
-df['p_only_title'], df['r_only_title'], df['f_only_title'] = get_p_r_f_col(
-    df, 'perspectives human labeled', 'perspectives considering only title')
-df['perspectives considering only article'] = [
+df[pot], df[rot], df[fot] = get_p_r_f_col(df, phl, pcot)
+df[pcoa] = [
     json.loads(requests.post(url, data={'a': article_dict[title]}).text)
     for title in df['title']]
-df['p_only_artile'], df['r_only_artile'], df['f_only_article'] = get_p_r_f_col(
-    df, 'perspectives human labeled', 'perspectives considering only article')
-df['perspectives considering t and a'] = [json.loads(
+df[poa], df[roa], df[foa] = get_p_r_f_col(df, phl, pcoa)
+df[pcta] = [json.loads(
     requests.post(url, data={'t': title, 'a': article_dict[title]}).text)
     for title in df['title']]
-df['p_t_and_a'], df['r_t_and_a'], df['f_t_and_a'] = get_p_r_f_col(
-    df, 'perspectives human labeled', 'perspectives considering t and a')
+df[pta], df[rta], df[fta] = get_p_r_f_col(df, phl, pcta)
 
+df.loc[len(df.index) + 1, 'title'] = 'Average'
+for x in [pot, rot, fot, poa, roa, foa, pta, rta, fta]:
+    df.loc[len(df.index), x] = np.mean(df[x][:-1])
 df.to_excel(os.path.join(data_root_dir, 'wp_xlsx', 'wp_evaluation.xlsx'),
             index=None, engine='openpyxl', freeze_panes=(1, 1))
