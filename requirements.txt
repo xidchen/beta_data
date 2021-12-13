@@ -10,6 +10,8 @@ scikit-learn
 tensorflow-hub
 tensorflow-text
 tf-models-official
+matplotlib
+seaborn
 openpyxl
 flask
 requests
