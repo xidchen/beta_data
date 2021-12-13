@@ -19,8 +19,12 @@ def main():
         x = flask.request.form.get('x')
         y = flask.request.form.get('y')
     if x and y:
-        x = tf.constant(eval(x), dtype=tf.float64)
-        y = tf.constant(eval(y), dtype=tf.float64)
+        try:
+            x = tf.constant(eval(x), dtype=tf.float64)
+            y = tf.constant(eval(y), dtype=tf.float64)
+        except (NameError, SyntaxError, ValueError):
+            res = '400 Bad Request'
+            return flask.jsonify(res)
         y = tf.reshape(y, [len(y), 1])
         try:
             res = tf.linalg.inv(tf.transpose(x) @ x) @ tf.transpose(x) @ y
