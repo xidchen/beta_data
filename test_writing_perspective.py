@@ -82,8 +82,8 @@ def get_embedding(_r: requests.models.Response) -> [float]:
     """Get text embedding from the response of a request"""
     _p_t = 0.5
     _p_a = 1 - _p_t
-    _t_e = json.loads(_r.text)['t_embed']
-    _a_e = json.loads(_r.text)['a_embed']
+    _t_e = json.loads(_r.text)['s1_embed']
+    _a_e = json.loads(_r.text)['s2_embed']
     return [_p_t * _t + _p_a * _a for (_t, _a) in zip(_t_e, _a_e)
             ] if _t_e and _a_e else _t_e if _t_e else _a_e
 
@@ -105,11 +105,11 @@ df.to_excel(os.path.join(data_root_dir, 'wp_xlsx', 'wp_evaluation.xlsx'),
             index=None, engine='openpyxl', freeze_panes=(1, 1))
 
 df[ecot] = df.apply(lambda _r: get_embedding(requests.post(
-    url_a, data={'t': _r['title']})), axis=1)
+    url_a, data={'s1': _r['title']})), axis=1)
 df[ecoa] = df.apply(lambda _r: get_embedding(requests.post(
-    url_a, data={'a': _r['article']})), axis=1)
+    url_a, data={'s2': _r['article']})), axis=1)
 df[ecta] = df.apply(lambda _r: get_embedding(requests.post(
-    url_a, data={'t': _r['title'], 'a': _r['article']})), axis=1)
+    url_a, data={'s1': _r['title'], 's2': _r['article']})), axis=1)
 
 
 def get_perspectives(_ts: tf.Tensor, _sr: pd.Series, _tc: int) -> {}:

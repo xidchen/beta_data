@@ -15,22 +15,21 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
-    t, a = None, None
+    t, a, res = '', '', {}
     if flask.request.method == 'GET':
         t = flask.request.args.get('t', '')
         a = flask.request.args.get('a', '')
     if flask.request.method == 'POST':
         t = flask.request.form.get('t', '')
         a = flask.request.form.get('a', '')
-    res = {}
     top_count = 1
     p_t = .5
     p_a = 1 - p_t
     if t or a:
         res['status'] = '200 OK'
-        _r = requests.post(url, data={'t': t, 'a': a})
-        t_embed = json.loads(_r.text)['t_embed']
-        a_embed = json.loads(_r.text)['a_embed']
+        _r = requests.post(url, data={'s1': t, 's2': a})
+        t_embed = json.loads(_r.text)['s1_embed']
+        a_embed = json.loads(_r.text)['s2_embed']
         q_embed = [p_t * _t + p_a * _a for (_t, _a) in zip(t_embed, a_embed)
                    ] if t and a else t_embed if t else a_embed
         q_embed = tf.reshape(tf.constant(q_embed), [1, len(q_embed)])

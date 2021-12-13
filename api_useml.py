@@ -15,18 +15,17 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
-    t, a, lb = None, None, None
+    s1, s2, lb, res = '', '', '', {}
     if flask.request.method == 'GET':
-        t = flask.request.args.get('t', '')
-        a = flask.request.args.get('a', '')
+        s1 = flask.request.args.get('s1', '')
+        s2 = flask.request.args.get('s2', '')
         lb = flask.request.args.get('lb', '')
     if flask.request.method == 'POST':
-        t = flask.request.form.get('t', '')
-        a = flask.request.form.get('a', '')
+        s1 = flask.request.form.get('s1', '')
+        s2 = flask.request.form.get('s2', '')
         lb = flask.request.form.get('lb', '')
-    print(f"Title: {t}")
-    print(f"Article: {a}")
-    res = {}
+    print(f"Title: {s1}")
+    print(f"Article: {s2}")
     if lb:
         try:
             lb = eval(lb)
@@ -35,27 +34,26 @@ def main():
             print("Title and article will not be considered.")
             res['status'] = '200 OK'
             res['l_embed'] = useml_embed(lb).numpy().tolist()
-        except SyntaxError or NameError:
+        except (NameError, SyntaxError):
             print(f"Label parsing error: {lb}")
             res['status'] = '400 Bad Request'
-        res['t_embed'] = res['a_embed'] = res['q_embed'] = []
         return res
     ml = 1000
-    if t or a:
+    if s1 or s2:
         res['status'] = '200 OK'
-        t = beta_utils.split_one_line_long_article(t, ml) if t else []
-        a = beta_utils.split_one_line_long_article(a, ml) if a else []
-        q = t + a if t and a else t if t else a
+        s1 = beta_utils.split_one_line_long_article(s1, ml) if s1 else []
+        s2 = beta_utils.split_one_line_long_article(s2, ml) if s2 else []
+        q = s1 + s2 if s1 and s2 else s1 if s1 else s2
         q_embed = useml_embed(q)
-        res['t_embed'] = tf.reduce_mean(
-            q_embed[:len(t)], 0).numpy().tolist() if t else []
-        res['a_embed'] = tf.reduce_mean(
-            q_embed[len(t):], 0).numpy().tolist() if a else []
+        res['s1_embed'] = tf.reduce_mean(
+            q_embed[:len(s1)], 0).numpy().tolist() if s1 else []
+        res['s2_embed'] = tf.reduce_mean(
+            q_embed[len(s1):], 0).numpy().tolist() if s2 else []
     else:
         res['status'] = '400 Bad Request'
-        res['t_embed'] = res['a_embed'] = res['q_embed'] = []
-    print(f"t_embed[:6]: {res['t_embed'][:6]}")
-    print(f"a_embed[:6]: {res['a_embed'][:6]}")
+        res['s1_embed'] = res['s2_embed'] = []
+    print(f"s1_embed[:6]: {res['s1_embed'][:6]}")
+    print(f"s2_embed[:6]: {res['s2_embed'][:6]}")
     return flask.jsonify(res)
 
 
