@@ -3,13 +3,19 @@ import json
 import requests
 import tensorflow as tf
 
+for device in tf.config.list_physical_devices('GPU'):
+    tf.config.experimental.set_memory_growth(device, True)
+tf.get_logger().setLevel('ERROR')
+
 
 app = flask.Flask(__name__)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
-    message = """Welcome to Beta API!
+    message = """
+    Welcome to Beta API!
+
     route                 parameters  example  
     /chatbot              q           ?q=交银新成长混合和交银精选混合
     /ols                  x, y        ?x=[[0,1],[2,3]]&y=[0,1]
