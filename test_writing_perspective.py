@@ -65,8 +65,8 @@ def get_p_r_f_col(_df: pd.DataFrame, _c1: str, _c2: str) -> ([], [], []):
     return _ps, _rs, _fs
 
 
-url_a = 'http://172.17.12.57:5100'
-url_b = 'http://172.17.12.57:5300'
+url_a = 'http://172.17.12.57:5300'
+url_b = 'http://172.17.12.57:5310'
 pcot = 'perspectives considering only title'
 pcoa = 'perspectives considering only article'
 pcta = 'perspectives considering t and a'

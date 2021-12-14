@@ -54,4 +54,4 @@ if __name__ == '__main__':
     wp_names = [wp_name for wp_name in wp_id_to_name.values()]
     r = requests.post(url, data={'lb': str(wp_names)})
     wp_embeds = tf.constant(json.loads(r.text)['l_embed'])
-    app.run('0.0.0.0', 5300)
+    app.run('0.0.0.0', 5310)

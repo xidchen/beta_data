@@ -60,4 +60,4 @@ def main():
 if __name__ == '__main__':
     useml_embed = hub.load("https://tfhub.dev/google/"
                            "universal-sentence-encoder-multilingual-large/3")
-    app.run('0.0.0.0', 5100)
+    app.run('0.0.0.0', 5300)
