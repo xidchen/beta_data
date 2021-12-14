@@ -116,4 +116,4 @@ if __name__ == '__main__':
         except KeyError:
             print(f'Entity {e} code not loaded')
             continue
-    app.run('0.0.0.0', 5000)
+    app.run('0.0.0.0', 5100)
