@@ -10,7 +10,7 @@ for image in sorted(os.listdir(data_root_path)):
     im = PIL.Image.open(os.path.join(data_root_path, image))
     print(image, im.mode, im.size, im.info)
     im = im.resize(im.size, PIL.Image.LANCZOS)
-    s = pytesseract.image_to_string(im, lang='chi_sim')
+    s = pytesseract.image_to_string(im, lang='chi_sim', config='--dpi 300')
     while ' ' in s or '\n\n' in s:
         s = s.replace(' ', '').replace('\n\n', '\n')
     print(s)
