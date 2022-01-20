@@ -1,6 +1,7 @@
 import base64
 import os
 import PIL.Image
+import pprint
 import pytesseract
 import requests
 
@@ -13,7 +14,7 @@ def run_ocr(data_dir: str):
     """Run OCR on image files in a directory"""
     for image in sorted(os.listdir(data_dir)):
         im = PIL.Image.open(os.path.join(data_dir, image))
-        print(image, im.mode, im.size, im.info)
+        print(image, im.mode, im.size)
         im = im.resize(im.size, PIL.Image.LANCZOS)
         s = pytesseract.image_to_string(im, lang='chi_sim', config='--dpi 300')
         while ' ' in s or '\n\n' in s:
@@ -29,19 +30,35 @@ def run_baidu_ocr(data_dir: str):
               'client_secret': 'IMVSe74vmEqGdmEYEhIcgIww3m4il9Rh'}
     response = requests.get(url, params=params)
     access_token = response.json()['access_token']
-    url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic'
+    mode = 'accurate'
+    url_dict = {
+        'ab': 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic',
+        'accurate': 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate',
+        'gb': 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic',
+        'general': 'https://aip.baidubce.com/rest/2.0/ocr/v1/general',
+        'form': 'https://aip.baidubce.com/rest/2.0/ocr/v1/form'
+    }
+    url = url_dict[mode]
     params = {'access_token': access_token}
     for image in sorted(os.listdir(data_dir)):
         im = PIL.Image.open(os.path.join(data_dir, image))
-        print(image, im.mode, im.size, im.info)
+        print(image, im.mode, im.size)
         f = open(os.path.join(data_dir, image), 'rb')
         im = base64.b64encode(f.read())
         data = {'image': im}
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         response = requests.post(url, data=data, params=params, headers=headers)
         rs = response.json()
-        s = '\n'.join([r['words'] for r in rs['words_result']]) + '\n'
-        print(s)
+        if mode in {'ab', 'gb'}:
+            s = '\n'.join([r['words'] for r in rs['words_result']]) + '\n'
+            print(s)
+        if mode in {'accurate', 'general'}:
+            s = rs['words_result']
+            pprint.pprint(s)
+        if mode in {'form'}:
+            for s in rs['forms_result']:
+                print('\n'.join([r.get('words', '') for r in s['header']]))
+                print('\n'.join([r.get('words', '') for r in s['body']]))
 
 
-run_ocr(data_root_path)
+run_baidu_ocr(data_root_path)
