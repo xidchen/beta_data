@@ -30,7 +30,7 @@ def run_baidu_ocr(data_dir: str):
               'client_secret': 'IMVSe74vmEqGdmEYEhIcgIww3m4il9Rh'}
     response = requests.get(url, params=params)
     access_token = response.json()['access_token']
-    mode = 'accurate'
+    mode = 'ab'
     url_dict = {
         'ab': 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic',
         'accurate': 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate',
@@ -49,6 +49,9 @@ def run_baidu_ocr(data_dir: str):
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         response = requests.post(url, data=data, params=params, headers=headers)
         rs = response.json()
+        if 'error_msg' in rs:
+            print(rs['error_msg'], rs['error_code'])
+            break
         if mode in {'ab', 'gb'}:
             s = '\n'.join([r['words'] for r in rs['words_result']]) + '\n'
             print(s)
