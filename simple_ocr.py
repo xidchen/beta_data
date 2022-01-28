@@ -16,10 +16,17 @@ def run_ocr(data_dir: str):
         im = PIL.Image.open(os.path.join(data_dir, image))
         print(image, im.mode, im.size)
         im = im.resize(im.size, PIL.Image.LANCZOS)
-        s = pytesseract.image_to_string(im, lang='chi_sim', config='--dpi 300')
-        while ' ' in s or '\n\n' in s:
-            s = s.replace(' ', '').replace('\n\n', '\n')
-        print(s)
+        df = pytesseract.image_to_data(im, lang='chi_sim', config='--dpi 300',
+                                       output_type=pytesseract.Output.DATAFRAME)
+        df = df.dropna(subset=['text'])
+        df = df[df['text'] != ' ']
+        rs = {'words_result': [{'location': {'height': int(df.at[i, 'height']),
+                                             'left': int(df.at[i, 'left']),
+                                             'top': int(df.at[i, 'top']),
+                                             'width': int(df.at[i, 'width'])},
+                                'words': df.at[i, 'text']} for i in df.index]}
+        s = rs['words_result']
+        pprint.pprint(s)
 
 
 def run_baidu_ocr(data_dir: str):
