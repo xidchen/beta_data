@@ -16,4 +16,5 @@ openpyxl
 flask
 requests
 six
+librosa
 pytesseract
