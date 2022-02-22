@@ -1,7 +1,10 @@
 import flask
 import json
+import os
 import requests
+import tempfile
 import tensorflow as tf
+import werkzeug.utils
 
 for device in tf.config.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(device, True)
@@ -96,6 +99,22 @@ def bert_tokenizer():
     if flask.request.method == 'POST':
         s = flask.request.form.get('s', '')
     res = json.loads(requests.get(url, params={'s': s}).text)
+    return flask.jsonify(res)
+
+
+@app.route('/ocr', methods=['POST'])
+def ocr():
+    url = 'http://localhost:5500'
+    file = flask.request.files.get('file')
+    if file:
+        img_file = werkzeug.utils.secure_filename(file.filename)
+        img_file_path = os.path.join(tempfile.gettempdir(), img_file)
+        file.save(img_file_path)
+        files = {'file': open(img_file_path, 'rb')}
+        res = json.loads(requests.post(url, files=files).text)
+        os.remove(img_file_path)
+    else:
+        res = {'error_msg': 'image error'}
     return flask.jsonify(res)
 
 
