@@ -118,5 +118,24 @@ def ocr():
     return flask.jsonify(res)
 
 
+@app.route('/coach', methods=['POST'])
+def coach():
+    url = 'http://localhost:5600'
+    audio = flask.request.files.get('audio')
+    rhetoric = flask.request.form.get('rhetoric')
+    keywords = flask.request.form.get('keywords')
+    if audio and rhetoric and keywords:
+        audio_file = werkzeug.utils.secure_filename(audio.filename)
+        audio_file_path = os.path.join(tempfile.gettempdir(), audio_file)
+        audio.save(audio_file_path)
+        files = {'audio': open(audio_file_path, 'rb')}
+        data = {'rhetoric': rhetoric, 'keywords': keywords}
+        res = json.loads(requests.post(url, data=data, files=files).text)
+        os.remove(audio_file_path)
+    else:
+        res = {'error_msg': 'input error'}
+    return flask.jsonify(res)
+
+
 if __name__ == '__main__':
     app.run('0.0.0.0', 5000)
