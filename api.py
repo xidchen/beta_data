@@ -36,7 +36,7 @@ def chatbot():
         q = flask.request.args.get('q', '')
     if flask.request.method == 'POST':
         q = flask.request.form.get('q', '')
-    res = json.loads(requests.get(url, params={'q': q}).text)
+    res = json.loads(requests.post(url, data={'q': q}).text)
     return flask.jsonify(res)
 
 
@@ -50,7 +50,7 @@ def ols():
     if flask.request.method == 'POST':
         x = flask.request.form.get('x')
         y = flask.request.form.get('y')
-    res = json.loads(requests.get(url, params={'x': x, 'y': y}).text)
+    res = json.loads(requests.post(url, data={'x': x, 'y': y}).text)
     return flask.jsonify(res)
 
 
@@ -63,7 +63,7 @@ def sentence_encoder():
     if flask.request.method == 'POST':
         s = flask.request.form.get('s', '')
     if s:
-        r = json.loads(requests.get(url, params={'s1': s}).text)
+        r = json.loads(requests.post(url, data={'s1': s}).text)
         res = r['s1_embed']
     else:
         res = []
@@ -81,7 +81,7 @@ def semantic_similarity():
         s1 = flask.request.form.get('s1', '')
         s2 = flask.request.form.get('s2', '')
     if s1 and s2:
-        r = json.loads(requests.get(url, params={'s1': s1, 's2': s2}).text)
+        r = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
         t = tf.reshape(tf.constant(r['s1_embed']), shape=[1, 512])
         a = tf.reshape(tf.constant(r['s2_embed']), shape=[1, 512])
         res = round(tf.einsum('ij,kj->ik', t, a).numpy().tolist()[0][0], 6)
@@ -98,7 +98,7 @@ def bert_tokenizer():
         s = flask.request.args.get('s', '')
     if flask.request.method == 'POST':
         s = flask.request.form.get('s', '')
-    res = json.loads(requests.get(url, params={'s': s}).text)
+    res = json.loads(requests.post(url, data={'s': s}).text)
     return flask.jsonify(res)
 
 
