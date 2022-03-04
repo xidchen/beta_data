@@ -61,20 +61,17 @@ def keywords_score(keywords: str, transcript: str) -> int:
     return res
 
 
-def speed_score(audio_file_path: str, transcript: str) -> int:
+def speed_score(duration: float, transcript: str) -> int:
     """Calculate speed score based on audio duration and transcript word count
-    :param audio_file_path: audio file path in the file system
+    :param duration: audio duration in seconds
     :param transcript: user's ASR result
     :return: score
     """
     res = 0
-    s_per_m = 60
-    audio_duration = librosa.get_duration(filename=audio_file_path)
-    word_count = len(transcript)
-    if audio_duration and word_count:
-        speed = int(word_count / audio_duration * s_per_m)
-        if 60 <= speed < 120 or 300 <= speed < 350:
+    if duration and transcript:
+        speed = int(len(transcript) / duration)
+        if 1 <= speed < 2 or 5 <= speed < 6:
             res = 60
-        if 120 <= speed < 300:
+        if 2 <= speed < 5:
             res = 100
     return res

@@ -34,6 +34,14 @@ def replace_ext_to_txt(name: str) -> str:
     return name.replace(name.rsplit('.', 1)[1], 'txt')
 
 
+def duration(file_path: str) -> float:
+    """Calculate duration (in seconds) of an audio file
+    :param file_path: WAV file path
+    :return: duration (in seconds)
+    """
+    return librosa.get_duration(filename=file_path)
+
+
 def run_bidu_asr(file_path: str) -> {}:
     """Run Baidu asr
     :param file_path: WAV file path
