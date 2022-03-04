@@ -24,18 +24,18 @@ def main():
         s1 = flask.request.form.get('s1', '')
         s2 = flask.request.form.get('s2', '')
         lb = flask.request.form.get('lb', '')
-    print(f"Title: {s1}")
-    print(f"Article: {s2}")
+    print(f'S1: {s1}')
+    print(f'S2: {s2}')
     if lb:
         try:
             lb = eval(lb)
             assert isinstance(lb, list) is True
-            print(f"Label {len(lb)}: {lb}")
-            print("Title and article will not be considered.")
+            print(f'Label {len(lb)}: {lb}')
+            print('S1 and S2 will not be considered.')
             res['status'] = '200 OK'
             res['l_embed'] = useml_embed(lb).numpy().tolist()
         except (NameError, SyntaxError):
-            print(f"Label parsing error: {lb}")
+            print(f'Label parsing error: {lb}')
             res['status'] = '400 Bad Request'
         return res
     ml = 1000
@@ -52,8 +52,6 @@ def main():
     else:
         res['status'] = '400 Bad Request'
         res['s1_embed'] = res['s2_embed'] = []
-    print(f"s1_embed[:6]: {res['s1_embed'][:6]}")
-    print(f"s2_embed[:6]: {res['s2_embed'][:6]}")
     return flask.jsonify(res)
 
 
