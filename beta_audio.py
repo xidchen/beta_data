@@ -15,15 +15,8 @@ tf.get_logger().setLevel('ERROR')
 
 
 SAMPLE_RATE = 16000
-ALLOWED_EXTENSIONS = {'wav'}
-
-
-def allowed_file(name: str) -> bool:
-    """Check whether the file name has an allowed extension
-    :param name: audio file name
-    :return: True or False
-    """
-    return '.' in name and name.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+AMR_EXTENSION = '.amr'
+WAV_EXTENSION = '.wav'
 
 
 def replace_ext_to_txt(name: str) -> str:
@@ -34,7 +27,35 @@ def replace_ext_to_txt(name: str) -> str:
     return name.replace(name.rsplit('.', 1)[1], 'txt')
 
 
-def duration(file_path: str) -> float:
+def get_amr_audio(url: str, file_name: str, file_dir: str) -> str:
+    """Get AMR audio file from url
+    :param url: the url redirecting to audio file storage
+    :param file_name: the audio file name (assuming without extension)
+    :param file_dir: the directory to save audio file
+    :return: audio file path
+    """
+    if file_name and not file_name.endswith(AMR_EXTENSION):
+        file_name += AMR_EXTENSION
+    file_path = os.path.join(file_dir, file_name)
+    response = requests.get(url, stream=True, timeout=60)
+    with open(file_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=128):
+            f.write(chunk)
+    return file_path
+
+
+def convert_amr_to_wav(amr_file_path: str) -> str:
+    """Convert AMR audio file to WAV
+    :param amr_file_path: AMR audio file path
+    :return: WAV audio file path
+    """
+    wav_file_path = amr_file_path.replace(AMR_EXTENSION, WAV_EXTENSION)
+    ffmpeg_command = 'ffmpeg -hide_banner -loglevel error'
+    os.system(f'{ffmpeg_command} -y -i {amr_file_path} {wav_file_path}')
+    return wav_file_path
+
+
+def get_duration(file_path: str) -> float:
     """Calculate duration (in seconds) of an audio file
     :param file_path: WAV file path
     :return: duration (in seconds)
@@ -42,10 +63,9 @@ def duration(file_path: str) -> float:
     return librosa.get_duration(filename=file_path)
 
 
-def run_bidu_asr(file_path: str) -> {}:
-    """Run Baidu asr
-    :param file_path: WAV file path
-    :return: asr result
+def get_bidu_asr_params() -> {}:
+    """Get Baidu ASR parameters
+    :return: parameters
     """
     url = 'https://aip.baidubce.com/oauth/2.0/token'
     params = {'grant_type': 'client_credentials',
@@ -54,9 +74,20 @@ def run_bidu_asr(file_path: str) -> {}:
     response = requests.get(url, params=params)
     access_token = response.json()['access_token']
     params = {'cuid': hex(uuid.getnode()), 'token': access_token}
+    return params
 
+
+def run_bidu_asr(params: {},
+                 file_path: str = None,
+                 waveform: np.ndarray = None) -> {}:
+    """Run Baidu ASR on either file_path or waveform input
+    :param params: Baidu ASR parameters
+    :param file_path: WAV file path
+    :param waveform: WAV waveform in shape of (len(waveform),)
+    :return: ASR result
+    """
     url = 'https://vop.baidu.com/server_api'
-    wav = load_wav_mono(file_path)
+    wav = load_wav_mono(file_path) if file_path else waveform
     wav = tf.reshape(wav, [len(wav), 1])
     data = tf.audio.encode_wav(wav, SAMPLE_RATE).numpy()
     headers = {'content-type': f'audio/wav;rate={SAMPLE_RATE}'}
