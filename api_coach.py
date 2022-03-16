@@ -1,6 +1,5 @@
 import flask
 import os
-import random
 import werkzeug.utils
 
 import beta_audio
@@ -33,12 +32,14 @@ def main():
         rhetoric_score = beta_coach.rhetoric_score(r, t)
         keywords_score = beta_coach.keywords_score(k, t)
         speed_score = beta_coach.speed_score(duration, t)
-        res = {'transcript': t,
-               'scores': {'rhetoric': rhetoric_score,
+        fluency_score = beta_coach.fluency_score(wav_file_path)
+        articulation_score = beta_coach.articulation_score(wav_file_path)
+        res = {'scores': {'rhetoric': rhetoric_score,
                           'keywords': keywords_score,
-                          'fluency': random.randint(10, 99),
-                          'articulation': random.randint(10, 99),
-                          'speed': speed_score}}
+                          'speed': speed_score,
+                          'fluency': fluency_score,
+                          'articulation': articulation_score},
+               'transcript': t}
         return flask.jsonify(res)
     else:
         res = {'error_msg': 'input error'}
