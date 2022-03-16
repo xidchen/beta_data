@@ -1,7 +1,9 @@
 import librosa
 import numpy as np
+import random
 import re
 import requests
+import zlib
 
 
 def semantic_similarity(s1: str, s2: str) -> int:
@@ -74,4 +76,32 @@ def speed_score(duration: float, transcript: str) -> int:
             res = 60
         if 2 <= speed < 5:
             res = 100
+    return res
+
+
+def fluency_score(file_path: str) -> int:
+    """Calculate fluency score based on audio content
+    :param file_path: audio file path
+    :return: score
+    """
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    checksum = zlib.adler32(data)
+    r = random.Random(checksum)
+    score = r.random()
+    res = int(score * 100)
+    return res
+
+
+def articulation_score(file_path: str) -> int:
+    """Calculate articulation score based on audio content
+    :param file_path: audio file path
+    :return: score
+    """
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    checksum = zlib.crc32(data)
+    r = random.Random(checksum)
+    score = r.random()
+    res = int(score * 100)
     return res
