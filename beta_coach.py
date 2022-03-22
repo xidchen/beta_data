@@ -1,22 +1,26 @@
+import json
 import librosa
 import numpy as np
 import random
 import re
 import requests
+import tensorflow as tf
 import zlib
 
 
-def semantic_similarity(s1: str, s2: str) -> int:
+def semantic_similarity(s1: str, s2: str) -> float:
     """Calculate semantic similarity of two sentences
     :param s1: first sentence
     :param s2: second sentence
     :return: semantic similarity
     """
-    url = 'http://localhost:5000/semantic_similarity'
+    url = 'http://localhost:5300'
     res = 0
     if s1 and s2:
-        res = requests.post(url, data={'s1': s1, 's2': s2}).text
-        res = float(res)
+        r = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
+        r1 = tf.reshape(tf.constant(r['s1_embed']), shape=[1, 512])
+        r2 = tf.reshape(tf.constant(r['s2_embed']), shape=[1, 512])
+        res = tf.einsum('ij,kj->ik', r1, r2).numpy().tolist()[0][0]
     return res
 
 
