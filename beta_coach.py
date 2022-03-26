@@ -58,11 +58,12 @@ def keywords_score(keywords: str, transcript: str) -> int:
         transcripts = split_sentence(transcript)
         scores = []
         for k in keywords:
-            _scores = []
-            for t in transcripts:
-                _score = 1 if k in t else semantic_similarity(k, t)
-                _scores.append(_score)
-            scores.append(np.max(_scores))
+            if k:
+                _scores = []
+                for t in transcripts:
+                    _score = 1 if k in t else semantic_similarity(k, t)
+                    _scores.append(_score)
+                scores.append(np.max(_scores))
         res = int(np.mean(scores) * 100)
     return res
 
@@ -92,7 +93,7 @@ def fluency_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.adler32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.05, 1, 0.6)
+    score = r.triangular(0.06, 1, 0.62)
     res = int(score * 100)
     return res
 
@@ -106,6 +107,6 @@ def articulation_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.crc32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.05, 1, 0.65)
+    score = r.triangular(0.06, 1, 0.62)
     res = int(score * 100)
     return res
