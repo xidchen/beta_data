@@ -20,6 +20,9 @@ def main():
     r = flask.request.form.get('rhetoric')
     k = flask.request.form.get('keywords')
     t = flask.request.form.get('transcript')
+    print(f'R: {r}')
+    print(f'K: {k}')
+    print(f'T: {t}')
     if u and r and k and t:
         audio_file = u.rsplit('/', 1)[-1]
         audio_file = werkzeug.utils.secure_filename(audio_file)

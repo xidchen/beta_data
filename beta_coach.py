@@ -93,7 +93,7 @@ def fluency_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.adler32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.06, 1, 0.62)
+    score = r.triangular(0.4, 1, 0.8)
     res = int(score * 100)
     return res
 
@@ -107,6 +107,6 @@ def articulation_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.crc32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.06, 1, 0.62)
+    score = r.triangular(0.4, 1, 0.8)
     res = int(score * 100)
     return res
