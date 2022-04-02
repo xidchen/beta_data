@@ -35,12 +35,28 @@ def split_sentence(sentence: str) -> []:
     return res
 
 
+def drop_ending_punctuation(sentence: str) -> str:
+    """Remove punctuation at the end of a sentence
+    :param sentence: the sentence
+    :return: the sentence without ending punctuation
+    """
+    punctuations = ['。', '！', '？', '，', ';', '：']
+    while sentence:
+        if sentence[-1] in punctuations:
+            sentence = sentence[:-1]
+        else:
+            break
+    return sentence
+
+
 def rhetoric_score(rhetoric: str, transcript: str) -> int:
     """Calculate rhetoric score based on rhetoric reference and transcript
     :param rhetoric: rhetoric reference
     :param transcript: user's ASR result
     :return: score
     """
+    rhetoric = drop_ending_punctuation(rhetoric)
+    transcript = drop_ending_punctuation(transcript)
     score = semantic_similarity(rhetoric, transcript)
     res = int(score * 100) if score >= 0 else 0
     return res
@@ -54,16 +70,15 @@ def keywords_score(keywords: str, transcript: str) -> int:
     """
     res = 0
     if keywords and transcript:
-        keywords = keywords.split(sep=';')
+        keywords = [k.strip() for k in keywords.split(';') if k.strip()]
         transcripts = split_sentence(transcript)
         scores = []
         for k in keywords:
-            if k:
-                _scores = []
-                for t in transcripts:
-                    _score = 1 if k in t else semantic_similarity(k, t)
-                    _scores.append(_score)
-                scores.append(np.max(_scores))
+            _scores = []
+            for t in transcripts:
+                _score = 1 if k in t else semantic_similarity(k, t)
+                _scores.append(_score)
+            scores.append(np.max(_scores))
         res = int(np.mean(scores) * 100)
     return res
 
@@ -93,7 +108,7 @@ def fluency_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.adler32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.4, 1, 0.8)
+    score = r.triangular(0.5, 1, 0.85)
     res = int(score * 100)
     return res
 
@@ -107,6 +122,6 @@ def articulation_score(file_path: str) -> int:
         data = f.read()
     checksum = zlib.crc32(data)
     r = random.Random(checksum)
-    score = r.triangular(0.4, 1, 0.8)
+    score = r.triangular(0.5, 1, 0.85)
     res = int(score * 100)
     return res

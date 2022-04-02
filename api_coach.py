@@ -20,6 +20,7 @@ def main():
     r = flask.request.form.get('rhetoric')
     k = flask.request.form.get('keywords')
     t = flask.request.form.get('transcript')
+    print(f'U: {u}')
     print(f'R: {r}')
     print(f'K: {k}')
     print(f'T: {t}')
@@ -43,6 +44,7 @@ def main():
                           'fluency': fluency_score,
                           'articulation': articulation_score},
                'transcript': t}
+        print(res['scores'])
         return flask.jsonify(res)
     else:
         res = {'error_msg': 'input error'}
