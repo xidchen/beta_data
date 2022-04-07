@@ -99,17 +99,21 @@ def speed_score(duration: float, transcript: str) -> int:
     return res
 
 
-def fluency_score(file_path: str) -> int:
+def fluency_score(duration: float, file_path: str) -> int:
     """Calculate fluency score based on audio content
+    :param duration: audio duration in seconds
     :param file_path: audio file path
     :return: score
     """
-    with open(file_path, 'rb') as f:
-        data = f.read()
-    checksum = zlib.adler32(data)
-    r = random.Random(checksum)
-    score = r.triangular(0.5, 1, 0.85)
-    res = int(score * 100)
+    if duration < 5:
+        res = 50
+    else:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        checksum = zlib.adler32(data)
+        r = random.Random(checksum)
+        score = r.triangular(0.5, 1, 0.85)
+        res = int(score * 100)
     return res
 
 

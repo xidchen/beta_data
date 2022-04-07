@@ -36,7 +36,7 @@ def main():
         rhetoric_score = beta_coach.rhetoric_score(r, t)
         keywords_score = beta_coach.keywords_score(k, t)
         speed_score = beta_coach.speed_score(duration, t)
-        fluency_score = beta_coach.fluency_score(wav_file_path)
+        fluency_score = beta_coach.fluency_score(duration, wav_file_path)
         articulation_score = beta_coach.articulation_score(wav_file_path)
         res = {'scores': {'rhetoric': rhetoric_score,
                           'keywords': keywords_score,
