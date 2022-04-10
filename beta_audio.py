@@ -8,6 +8,9 @@ import requests
 import tensorflow as tf
 import tensorflow_io as tfio
 import uuid
+import wave
+import werkzeug.utils as wu
+
 
 for device in tf.config.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(device, True)
@@ -52,6 +55,32 @@ def convert_amr_to_wav(amr_file_path: str) -> str:
     wav_file_path = amr_file_path.replace(AMR_EXTENSION, WAV_EXTENSION)
     ffmpeg_command = 'ffmpeg -hide_banner -loglevel error'
     os.system(f'{ffmpeg_command} -y -i {amr_file_path} {wav_file_path}')
+    return wav_file_path
+
+
+def get_wav_from_amr_urls(urls: [str], file_dir: str) -> str:
+    """Get WAV audio file from a list of AMR urls
+    :param urls: the list of AMR urls redirecting to audio file storage
+    :param file_dir: the directory to save audio file
+    :return: WAV audio file path
+    """
+    audio_files = [url.rsplit('/', 1)[-1] for url in urls]
+    audio_files = [wu.secure_filename(f) for f in audio_files]
+    wav_file_paths = []
+    for (url, audio_file) in zip(urls, audio_files):
+        amr_file_path = get_amr_audio(url, audio_file, file_dir)
+        wav_file_paths.append(convert_amr_to_wav(amr_file_path))
+        os.remove(amr_file_path)
+    wav_data = []
+    for wav_file_path in wav_file_paths:
+        with wave.open(wav_file_path, 'rb') as w:
+            wav_data.append([w.getparams(), w.readframes(w.getnframes())])
+        os.remove(wav_file_path)
+    wav_file_path = wav_file_paths[0]
+    with wave.open(wav_file_path, 'wb') as w:
+        w.setparams(wav_data[0][0])
+        for i in range(len(wav_data)):
+            w.writeframes(wav_data[i][1])
     return wav_file_path
 
 
