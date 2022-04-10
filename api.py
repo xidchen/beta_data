@@ -121,12 +121,17 @@ def ocr():
 @app.route('/coach', methods=['POST'])
 def coach():
     url = 'http://localhost:5600'
-    u = flask.request.form.get('url')
+    v = flask.request.form.get('url')
+    u = flask.request.form.get('urls')
     r = flask.request.form.get('rhetoric')
     k = flask.request.form.get('keywords')
-    t = flask.request.form.get('transcript')
+    s = flask.request.form.get('transcript')
+    t = flask.request.form.get('transcripts')
     if u and r and k and t:
-        data = {'url': u, 'rhetoric': r, 'keywords': k, 'transcript': t}
+        data = {'urls': u, 'rhetoric': r, 'keywords': k, 'transcripts': t}
+        res = json.loads(requests.post(url, data=data).text)
+    elif v and r and k and s:
+        data = {'url': v, 'rhetoric': r, 'keywords': k, 'transcript': s}
         res = json.loads(requests.post(url, data=data).text)
     else:
         res = {'error_msg': 'input error'}
