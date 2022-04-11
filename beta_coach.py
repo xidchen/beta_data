@@ -35,6 +35,14 @@ def split_sentence(sentence: str) -> []:
     return res
 
 
+def split_by_semicolon(s: str) -> []:
+    """Split a string by semicolon into list of strings
+    :param s: the string
+    :return: list of strings
+    """
+    return [_s.strip() for _s in s.split(';') if _s.strip()]
+
+
 def drop_ending_punctuation(sentence: str) -> str:
     """Remove punctuation at the end of a sentence
     :param sentence: the sentence
@@ -70,7 +78,7 @@ def keywords_score(keywords: str, transcript: str) -> int:
     """
     res = 0
     if keywords and transcript:
-        keywords = [k.strip() for k in keywords.split(';') if k.strip()]
+        keywords = split_by_semicolon(keywords)
         transcripts = split_sentence(transcript)
         scores = []
         for k in keywords:

@@ -23,17 +23,12 @@ def main():
     s = flask.request.form.get('transcript')
     t = flask.request.form.get('transcripts')
     if u and r and k and t:
-        try:
-            u, t = eval(u), eval(t)
-            assert isinstance(u, list) is True
-            assert isinstance(t, list) is True
-        except (NameError, SyntaxError, AssertionError):
-            res = {'error_msg': 'input error'}
-            return flask.jsonify(res)
         print(f'U: {u}')
         print(f'R: {r}')
         print(f'K: {k}')
         print(f'T: {t}')
+        u = beta_coach.split_by_semicolon(u)
+        t = beta_coach.split_by_semicolon(t)
         wav_file_path = beta_audio.get_wav_from_amr_urls(u, upload_dir)
         transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
         t = ''.join(t)
