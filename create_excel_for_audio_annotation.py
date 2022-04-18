@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 
+import beta_utils
+
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_path = os.path.join(root_dir, 'BetaData', 'coach')
@@ -9,6 +11,7 @@ data_root_path = os.path.join(root_dir, 'BetaData', 'coach')
 for date_dir in os.listdir(os.path.join(data_root_path, 'wav')):
 
     audio_files = os.listdir(os.path.join(data_root_path, 'wav', date_dir))
+    audio_files = beta_utils.sort_numerically(audio_files)
 
     transcripts = []
     for audio_file in audio_files:

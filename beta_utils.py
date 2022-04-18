@@ -1,4 +1,5 @@
 import collections
+import re
 
 
 def replace_token_for_bert(_text: str) -> str:
@@ -116,3 +117,18 @@ def split_long_sentence(_sentence: str, _max_len: int) -> []:
     if _cur_sent:
         res.append(''.join(_cur_sent))
     return res
+
+
+def try_int(_s: str) -> int or str:
+    """Return an int if possible, or str unchanged"""
+    return int(_s) if _s.isdigit() else _s
+
+
+def alphanum_key(_s: str) -> [int or str]:
+    """Turn a string into a list of string and number chunks"""
+    return [try_int(_c) for _c in re.split(r'(\d+)', _s)]
+
+
+def sort_numerically(_l: [str]) -> [str]:
+    """Sort a list numerically"""
+    return sorted(_l, key=alphanum_key)
