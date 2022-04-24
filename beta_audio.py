@@ -1,6 +1,8 @@
 import glob
 import librosa
-import librosa.display
+import librosa.display as ld
+import librosa.feature as lf
+import librosa.onset as lo
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -10,11 +12,6 @@ import tensorflow_io as tfio
 import uuid
 import wave
 import werkzeug.utils as wu
-
-
-for device in tf.config.list_physical_devices('GPU'):
-    tf.config.experimental.set_memory_growth(device, True)
-tf.get_logger().setLevel('ERROR')
 
 
 SAMPLE_RATE = 16000
@@ -174,49 +171,62 @@ def mfccs_from_waveforms(_wav: tf.Tensor, _n_mfcc: int) -> tf.Tensor:
     return mfccs
 
 
-def feature_extraction(file_path: str) -> ():
+def feature_extraction(file_path: str,
+                       dims: [int],
+                       gate: [int],
+                       offset: float = 0.0,
+                       duration: float = None) -> ():
     """Return audio features
     :param file_path: audio file path
+    :param dims: feature dimensions (e.g. [20, 1, 1, 1])
+    :param gate: feature gate (e.g. [1, 1, 1, 1])
+    :param offset: start reading after this time (in seconds)
+    :param duration: only load up to this much audio (in seconds)
     :return: audio features
     """
-    y, sr = librosa.load(file_path, sr=None)
-    if y.ndim > 1:
-        y = y[:, 0]
-    y = y.T
+    y, sr = librosa.load(file_path, sr=None, offset=offset, duration=duration)
 
-    mfccs = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20).T, axis=0)
-    rmse = np.mean(librosa.feature.rms(y=y).T, axis=0)
-    spectral_flux = np.mean(librosa.onset.onset_strength(y=y, sr=sr).T, axis=0)
-    zcr = np.mean(librosa.feature.zero_crossing_rate(y=y).T, axis=0)
-    return mfccs, rmse, spectral_flux, zcr
+    mfccs = np.mean(lf.mfcc(y=y, sr=sr, n_mfcc=dims[0]).T, 0) if gate[0] else 0
+    rmse = np.mean(lf.rms(y=y).T, 0) if gate[1] else 0
+    sf = np.mean(lo.onset_strength(y=y, sr=sr).T, 0) if gate[2] else 0
+    zcr = np.mean(lf.zero_crossing_rate(y=y).T, 0) if gate[3] else 0
+    extracted_features = np.hstack([mfccs, rmse, sf, zcr])
+    extracted_features = extracted_features[extracted_features != 0]
+    return extracted_features
 
 
 def parse_audio_files(parent_dir: str,
                       sub_dirs: list,
-                      file_ext: str = '*.wav') -> ():
+                      file_ptn: str = '*') -> ():
     """Audio parsing, return array with features and labels
     :param parent_dir: parent directory where audio files are stored
     :param sub_dirs: subdirectories that are in the parent directory
-    :param file_ext: audio file extension
-    :return: array with features and labels
+    :param file_ptn: audio file name pattern
+    :return: array with features, labels and filenames
     """
-    n_mfccs = 20
-    number_of_features = n_mfccs + 3
+    n_mfccs, n_rmse, n_sf, n_zcr = 20, 1, 1, 1
+    feature_dims = [n_mfccs, n_rmse, n_sf, n_zcr]
+    feature_gate = [1, 0, 1, 1]
+    number_of_features = np.dot(feature_dims, feature_gate)
     features, labels = np.empty((0, number_of_features)), np.empty(0)
+    file_names = []
 
     for label, sub_dir in enumerate(sub_dirs):
-        for file_name in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
-            print(f'Actual file name: {file_name}')
+        file_count = 0
+        for file_name in glob.glob(os.path.join(parent_dir, sub_dir, file_ptn)):
             try:
-                mfccs, rmse, spectral_flux, zcr = feature_extraction(file_name)
+                extracted_features = feature_extraction(file_name,
+                                                        dims=feature_dims,
+                                                        gate=feature_gate)
+                file_count += 1
             except Exception as e:
-                print(f'[Error] There was an error in feature extraction: {e}')
+                print(f'Error in feature extraction from {file_name}: {e}')
                 continue
-            extracted_features = np.hstack([mfccs, rmse, spectral_flux, zcr])
             features = np.vstack([features, extracted_features])
             labels = np.append(labels, label)
-        print(f'Extracted features from {sub_dir}, done')
-    return np.array(features), np.array(labels, dtype=np.int)
+            file_names.append(file_name)
+        print(f'Extracted features from \'{sub_dir}\', {file_count} file(s);')
+    return np.array(features), np.array(labels, dtype=np.int), file_names
 
 
 def visualize_mfcc_series(features: np.ndarray):
@@ -224,9 +234,9 @@ def visualize_mfcc_series(features: np.ndarray):
     :param features: audio MFCC features
     """
     plt.figure()
-    librosa.display.specshow(features, x_axis='time')
+    ld.specshow(features, x_axis='time')
     plt.colorbar()
-    plt.title('MFCCs = 5 Values for 5s Audio Frames (High Class)')
+    plt.title('MFCC for Audio Frame')
     plt.tight_layout()
     plt.show()
 
@@ -243,22 +253,22 @@ def visualize_spectrograms(file_path: str):
     c = librosa.feature.chroma_cqt(y=y, sr=sr)
 
     plt.subplot(2, 2, 1)
-    librosa.display.specshow(d, y_axis='linear')
+    ld.specshow(d, y_axis='linear')
     plt.colorbar(format='%+2.0f dB')
     plt.title('Linear power spectrogram (grayscale)')
 
     plt.subplot(2, 2, 2)
-    librosa.display.specshow(d, y_axis='log')
+    ld.specshow(d, y_axis='log')
     plt.colorbar(format='%+2.0f dB')
     plt.title('Log-frequence power spectrogram')
 
     plt.subplot(2, 2, 3)
-    librosa.display.specshow(c, y_axis='chroma')
+    ld.specshow(c, y_axis='chroma')
     plt.colorbar()
     plt.title('Chromagram')
 
     plt.subplot(2, 2, 4)
-    librosa.display.specshow(d, y_axis='linear', cmap='gray_r')
+    ld.specshow(d, y_axis='linear', cmap='gray_r')
     plt.colorbar(format='%+2.0f dB')
     plt.title('Linear power spectrogram (grayscale)')
 
