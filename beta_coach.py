@@ -113,15 +113,18 @@ def fluency_score(duration: float, file_path: str) -> int:
     :param file_path: audio file path
     :return: score
     """
-    if duration < 5:
-        res = 50
-    else:
+    try:
+        url = 'http://localhost:5610'
+        r = requests.post(url, data={'file_path': file_path}).text
+        score = int(r)
+    except Exception as e:
+        print(f'[Error] use alternative since: {e}')
         with open(file_path, 'rb') as f:
             data = f.read()
-        checksum = zlib.adler32(data)
-        r = random.Random(checksum)
+        r = random.Random(zlib.adler32(data))
         score = r.triangular(0.5, 1, 0.85)
-        res = int(score * 100)
+        score = int(score * 100)
+    res = score if duration > 5 or score < 50 else 50
     return res
 
 
