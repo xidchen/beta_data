@@ -1,9 +1,14 @@
 import flask
 import os
+import tensorflow as tf
 import werkzeug.utils as wu
 
 import beta_audio
 import beta_coach
+
+for device in tf.config.list_physical_devices('GPU'):
+    tf.config.experimental.set_memory_growth(device, True)
+tf.get_logger().setLevel('ERROR')
 
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
@@ -80,4 +85,6 @@ def main():
 
 
 if __name__ == '__main__':
+    r1 = r2 = tf.random.normal([1, 32])
+    tf.einsum('ij,kj->ik', r1, r2)
     app.run('0.0.0.0', 5600)
