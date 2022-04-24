@@ -59,12 +59,12 @@ def sentence_encoder():
     url = 'http://localhost:5300'
     s, res = '', {}
     if flask.request.method == 'GET':
-        s = flask.request.args.get('s', '')
+        s = flask.request.args.get('s0', '')
     if flask.request.method == 'POST':
-        s = flask.request.form.get('s', '')
+        s = flask.request.form.get('s0', '')
     if s:
-        r = json.loads(requests.post(url, data={'s1': s}).text)
-        res = r['s1_embed']
+        r = json.loads(requests.post(url, data={'s0': s}).text)
+        res = r['s0_embed']
     else:
         res = []
     return flask.jsonify(res)
