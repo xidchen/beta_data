@@ -196,17 +196,18 @@ def feature_extraction(file_path: str,
 
 
 def parse_audio_files(parent_dir: str,
-                      sub_dirs: list,
+                      sub_dirs: [str],
+                      feature_dims: [int],
+                      feature_gate: [int],
                       file_ptn: str = '*') -> ():
     """Audio parsing, return array with features and labels
     :param parent_dir: parent directory where audio files are stored
     :param sub_dirs: subdirectories that are in the parent directory
+    :param feature_dims: feature dimensions (e.g. [20, 1, 1, 1])
+    :param feature_gate: feature gate (e.g. [1, 1, 1, 1])
     :param file_ptn: audio file name pattern
     :return: array with features, labels and filenames
     """
-    n_mfccs, n_rmse, n_sf, n_zcr = 20, 1, 1, 1
-    feature_dims = [n_mfccs, n_rmse, n_sf, n_zcr]
-    feature_gate = [1, 0, 1, 1]
     number_of_features = np.dot(feature_dims, feature_gate)
     features, labels = np.empty((0, number_of_features)), np.empty(0)
     file_names = []
