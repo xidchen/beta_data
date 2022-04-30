@@ -34,6 +34,9 @@ def main():
         print(f'T: {t}')
         u = beta_coach.split_by_semicolon(u)
         t = beta_coach.split_by_semicolon(t)
+        if not u or not t:
+            res = {'error_msg': 'input error'}
+            return flask.jsonify(res)
         wav_file_path = beta_audio.get_wav_from_amr_urls(u, upload_dir)
         transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
         t = ''.join(t)
@@ -85,6 +88,6 @@ def main():
 
 
 if __name__ == '__main__':
-    r1 = r2 = tf.random.normal([1, 32])
+    r1 = r2 = tf.random.normal([1, 8])
     tf.einsum('ij,kj->ik', r1, r2)
     app.run('0.0.0.0', 5600)
