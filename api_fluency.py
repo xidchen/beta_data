@@ -29,7 +29,7 @@ def main():
 
 
 if __name__ == '__main__':
-    model_path = './SavedModels/fluency_mlp_t1049_g20111_f66_sm'
+    model_path = './SavedModels/fluency_mlp_t1049_g20011_f64_sm'
     g = re.search(r'_g(\d+)_', model_path).group(1)
     f_dims = [int(d) for d in [g[:-3], g[-3:-2], g[-2:-1], g[-1]]]
     f_gate = [1 if d else 0 for d in f_dims]
