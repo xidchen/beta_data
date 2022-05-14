@@ -36,8 +36,14 @@ def main():
         t = beta_coach.split_by_semicolon(t)
         if not u or not t:
             res = {'error_msg': 'input error'}
+            print(res)
             return flask.jsonify(res)
-        wav_file_path = beta_audio.get_wav_from_amr_urls(u, upload_dir)
+        try:
+            wav_file_path = beta_audio.get_wav_from_amr_urls(u, upload_dir)
+        except FileNotFoundError:
+            res = {'error_msg': 'input error'}
+            print(res)
+            return flask.jsonify(res)
         transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
         t = ''.join(t)
         with open(transcript_path, 'w', encoding='utf-8') as f:
@@ -84,6 +90,7 @@ def main():
         return flask.jsonify(res)
     else:
         res = {'error_msg': 'input error'}
+        print(res)
         return flask.jsonify(res)
 
 
