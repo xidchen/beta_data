@@ -6,6 +6,7 @@ import shutil
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData', 'coach')
+excel_root_dir = os.path.join(data_root_dir, 'xlsx')
 
 ml_dir = os.path.join(data_root_dir, 'ml', 'fluency')
 if os.path.exists(ml_dir):
@@ -13,11 +14,12 @@ if os.path.exists(ml_dir):
 os.makedirs(ml_dir)
 data_count = 0
 
-for excel_file in os.listdir(os.path.join(data_root_dir, 'xlsx')):
+for excel_file in os.listdir(excel_root_dir):
     date = re.match(r'coach_(\d+).xlsx', excel_file).group(1)
-    excel_path = os.path.join(data_root_dir, 'xlsx', excel_file)
+    excel_path = os.path.join(excel_root_dir, excel_file)
     df = pd.read_excel(excel_path, usecols=['fluency', 'audio'],
                        dtype={'fluency': str}, engine='openpyxl')
+    df = df[df['fluency'].notna()]
     for fluency, audio in zip(df['fluency'], df['audio']):
         fluency_dir = os.path.join(ml_dir, fluency)
         if not os.path.exists(fluency_dir):
