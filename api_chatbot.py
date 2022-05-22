@@ -1,17 +1,15 @@
 import flask
+import official.nlp.bert.tokenization as onbt
 import os
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from official.nlp import bert
-import official.nlp.bert.tokenization
 
 import beta_bert
 import beta_code
 import beta_utils
 
-physical_devices = tf.config.list_physical_devices('GPU')
-for device in physical_devices:
+for device in tf.config.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
 
@@ -30,12 +28,12 @@ def main():
         v = flask.request.form.get('v', '')
     res = {}
     if q:
+        print({'q': q})
         res['status'] = '200 OK'
         q = beta_utils.replace_token_for_bert(str(q).strip())
         intent = intent_classes[tf.argmax(
             tf.sigmoid(intent_model(tf.constant([q])))[0])]
-        res['intent'] = {'id': i_name_to_id.get(intent, ''),
-                         'name': intent}
+        res['intent'] = {'id': i_name_to_id.get(intent, ''), 'name': intent}
         entities = beta_bert.predict_entities_from_query(
             _ner_model=entity_model,
             _query=q,
@@ -82,8 +80,7 @@ if __name__ == '__main__':
     bert_model_config = 'bert_zh_L-12_H-768_A-12/3'
     ner_tagging_scheme = 'BIO'
     max_seq_len = 128
-    tokenizer = bert.tokenization.FullTokenizer(
-        os.path.join(entity_model_path, 'vocab.txt'))
+    tokenizer = onbt.FullTokenizer(os.path.join(entity_model_path, 'vocab.txt'))
     with open(intent_class_path, encoding='utf-8') as f:
         intent_classes = f.read().strip().split('\n')
     with open(entity_class_path, encoding='utf-8') as f:
