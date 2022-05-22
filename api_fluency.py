@@ -10,6 +10,16 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
+model_path = 'SavedModels/mlp_fluency_t1049_g20011_f64_sm'
+g = re.search(r'_g(\d+)_', model_path).group(1)
+f_dims = [int(d) for d in [g[:-3], g[-3:-2], g[-2:-1], g[-1]]]
+f_gate = [1 if d else 0 for d in f_dims]
+grades = [gd * 11. for gd in [1, 3, 5, 7, 9]]
+model = tf.saved_model.load(model_path)
+model(tf.random.normal([1, np.dot(f_dims, f_gate)]))
+print(f'[INFO] Model {model_path} loaded')
+
+
 app = flask.Flask(__name__)
 
 
@@ -29,12 +39,4 @@ def main():
 
 
 if __name__ == '__main__':
-    model_path = './SavedModels/fluency_mlp_t1049_g20011_f64_sm'
-    g = re.search(r'_g(\d+)_', model_path).group(1)
-    f_dims = [int(d) for d in [g[:-3], g[-3:-2], g[-2:-1], g[-1]]]
-    f_gate = [1 if d else 0 for d in f_dims]
-    grades = [gd * 11. for gd in [1, 3, 5, 7, 9]]
-    model = tf.saved_model.load(model_path)
-    model(tf.random.normal([1, np.dot(f_dims, f_gate)]))
-    print(f'[INFO] Model {model_path} loaded')
     app.run('0.0.0.0', 5610)
