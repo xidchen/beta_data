@@ -13,7 +13,12 @@ tf.get_logger().setLevel('ERROR')
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_path = os.path.join(root_dir, 'BetaData', 'coach', 'dev')
-upload_dir = os.path.join(data_root_path, 'upload')
+file_dir = os.path.join(data_root_path, 'upload')
+tmp_dir = os.path.join(data_root_path, 'tmp')
+
+
+r1 = r2 = tf.random.normal([1, 8])
+tf.einsum('ij,kj->ik', r1, r2)
 
 
 app = flask.Flask(__name__)
@@ -39,7 +44,7 @@ def main():
             print(res)
             return flask.jsonify(res)
         try:
-            wav_file_path = beta_audio.get_wav_from_amr_urls(u, upload_dir)
+            wav_file_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
         except FileNotFoundError:
             res = {'error_msg': 'input error'}
             print(res)
@@ -69,7 +74,7 @@ def main():
         print(f'S: {s}')
         audio_file = v.rsplit('/', 1)[-1]
         audio_file = wu.secure_filename(audio_file)
-        amr_file_path = beta_audio.get_amr_audio(v, audio_file, upload_dir)
+        amr_file_path = beta_audio.get_amr_audio(v, audio_file, file_dir)
         wav_file_path = beta_audio.convert_amr_to_wav(amr_file_path)
         transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
         with open(transcript_path, 'w', encoding='utf-8') as f:
@@ -95,6 +100,4 @@ def main():
 
 
 if __name__ == '__main__':
-    r1 = r2 = tf.random.normal([1, 8])
-    tf.einsum('ij,kj->ik', r1, r2)
     app.run('0.0.0.0', 5600)
