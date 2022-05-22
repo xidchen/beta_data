@@ -111,59 +111,27 @@ if pdt:
 print('SVM')
 
 svm = sklearn.svm.SVC(C=200, gamma=0.0001, probability=True, random_state=0)
-
-print('Training:')
 svm.fit(x_raw, y_raw)
-print()
-
-print('Evalution:')
 acc = svm.score(x_test, y_test)
 print(f'Score: {acc:.4f}')
-print()
-
-print('Confusion matrix:')
-y_pred = svm.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
 print()
 
 
 print('RF')
 
 rf = se.RandomForestClassifier(n_estimators=350, random_state=0)
-
-print('Training:')
 rf.fit(x_raw, y_raw)
-print()
-
-print('Evaluation:')
 acc = rf.score(x_test, y_test)
 print(f'Score: {acc:.4f}')
-print()
-
-print('Confusion matrix:')
-y_pred = rf.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
 print()
 
 
 print('GBDT')
 
 gbdt = se.GradientBoostingClassifier(n_estimators=350, random_state=0)
-
-print('Training:')
-rf.fit(x_raw, y_raw)
-print()
-
-print('Evaluation:')
-acc = rf.score(x_test, y_test)
+gbdt.fit(x_raw, y_raw)
+acc = gbdt.score(x_test, y_test)
 print(f'Score: {acc:.4f}')
 print()
 
-print('Confusion matrix:')
-y_pred = rf.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
-print()
 print()
