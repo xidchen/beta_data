@@ -20,7 +20,7 @@ WAV_EXTENSION = '.wav'
 
 
 def replace_ext_to_txt(name: str) -> str:
-    """Repalce the file extension to .txt
+    """Replace the file extension to .txt
     :param name: original file name
     :return: file name whose extension replaced with .txt
     """
@@ -55,25 +55,36 @@ def convert_amr_to_wav(amr_file_path: str) -> str:
     return wav_file_path
 
 
-def get_wav_from_amr_urls(urls: [str], file_dir: str) -> str:
+def get_wav_from_urls(urls: [str], file_dir: str, tmp_dir: str) -> str:
     """Get WAV audio file from a list of AMR urls
     :param urls: the list of AMR urls redirecting to audio file storage
-    :param file_dir: the directory to save audio file
+    :param file_dir: the directory to save reproduced audio file
+    :param tmp_dir: the directory to save temporary audio file
     :return: WAV audio file path
     """
-    audio_files = [url.rsplit('/', 1)[-1] for url in urls]
-    audio_files = [wu.secure_filename(f) for f in audio_files]
+    amr_files = [url.rsplit('/', 1)[-1] for url in urls]
+    amr_files = [wu.secure_filename(f) for f in amr_files]
     wav_file_paths = []
-    for (url, audio_file) in zip(urls, audio_files):
-        amr_file_path = get_amr_audio(url, audio_file, file_dir)
-        wav_file_paths.append(convert_amr_to_wav(amr_file_path))
-        os.remove(amr_file_path)
+    for (url, amr_file) in zip(urls, amr_files):
+        if amr_file.endswith(AMR_EXTENSION):
+            wav_file = amr_file.replace(AMR_EXTENSION, WAV_EXTENSION)
+        else:
+            wav_file = amr_file + WAV_EXTENSION
+        wav_file_path = os.path.join(tmp_dir, wav_file)
+        if os.path.exists(wav_file_path):
+            wav_file_paths.append(wav_file_path)
+        else:
+            try:
+                amr_file_path = get_amr_audio(url, amr_file, tmp_dir)
+                wav_file_paths.append(convert_amr_to_wav(amr_file_path))
+                os.remove(amr_file_path)
+            except requests.exceptions.MissingSchema:
+                continue
     wav_data = []
     for wav_file_path in wav_file_paths:
         with wave.open(wav_file_path, 'rb') as w:
             wav_data.append([w.getparams(), w.readframes(w.getnframes())])
-        os.remove(wav_file_path)
-    wav_file_path = wav_file_paths[0]
+    wav_file_path = wav_file_paths[0].replace(tmp_dir, file_dir)
     with wave.open(wav_file_path, 'wb') as w:
         w.setparams(wav_data[0][0])
         for i in range(len(wav_data)):
