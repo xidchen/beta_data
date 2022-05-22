@@ -10,6 +10,11 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
+useml = hub.load('https://tfhub.dev/google/'
+                 'universal-sentence-encoder-multilingual-large/3')
+useml(['0'])
+
+
 app = flask.Flask(__name__)
 
 
@@ -46,7 +51,4 @@ def main():
 
 
 if __name__ == '__main__':
-    useml = hub.load('https://tfhub.dev/google/'
-                     'universal-sentence-encoder-multilingual-large/3')
-    useml(['0'])
     app.run('0.0.0.0', 5300)
