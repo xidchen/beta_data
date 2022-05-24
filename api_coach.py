@@ -1,4 +1,5 @@
 import flask
+import hashlib
 import os
 import tensorflow as tf
 import werkzeug.utils as wu
@@ -21,6 +22,9 @@ r1 = r2 = tf.random.normal([1, 8])
 tf.einsum('ij,kj->ik', r1, r2)
 
 
+md_dict = {}
+
+
 app = flask.Flask(__name__)
 
 
@@ -33,21 +37,32 @@ def main():
     s = flask.request.form.get('transcript')
     t = flask.request.form.get('transcripts')
     if u and r and k and t:
-        print(f'U: {u}')
-        print(f'R: {r}')
-        print(f'K: {k}')
-        print(f'T: {t}')
+        m = f'U: {u}\nR: {r}\nK: {k}\nT: {t}'
+        print(m)
+        md = hashlib.md5(m.encode('utf-8')).hexdigest()
+        if md in md_dict:
+            if 'error_msg' in md_dict[md]:
+                res = md_dict[md]
+                print(res)
+                return flask.jsonify(res)
+            if 'rhetoric' in md_dict[md]:
+                res = {'scores': md_dict[md],
+                       'transcript': t}
+                print(res['scores'])
+                return flask.jsonify(res)
         u = beta_coach.split_by_semicolon(u)
         t = beta_coach.split_by_semicolon(t)
         if not u or not t:
             res = {'error_msg': 'input error'}
             print(res)
+            md_dict[md] = res
             return flask.jsonify(res)
         try:
             wav_file_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
         except FileNotFoundError:
             res = {'error_msg': 'input error'}
             print(res)
+            md_dict[md] = res
             return flask.jsonify(res)
         transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
         t = ''.join(t)
@@ -66,6 +81,7 @@ def main():
                           'articulation': articulation_score},
                'transcript': t}
         print(res['scores'])
+        md_dict[md] = res['scores']
         return flask.jsonify(res)
     elif v and r and k and s:
         print(f'V: {v}')
