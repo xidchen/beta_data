@@ -54,10 +54,11 @@ def rhetoric_score(rhetoric: str, transcript: str) -> int:
     :param transcript: user's ASR result
     :return: score
     """
-    rhetoric = drop_ending_punctuation(rhetoric)
-    transcript = drop_ending_punctuation(transcript)
-    se = semantic_embedding([rhetoric, transcript])
-    score = np.inner(se[0], se[1])
+    rhetorics = [rhetoric, drop_ending_punctuation(rhetoric)]
+    transcripts = [transcript, drop_ending_punctuation(transcript)]
+    se = semantic_embedding(rhetorics + transcripts)
+    scores = np.inner(se[:2], se[2:])
+    score = np.max(scores)
     res = int(score * 100) if score >= 0 else 0
     return res
 
