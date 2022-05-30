@@ -110,9 +110,8 @@ def fluency_score(duration: float, file_path: str) -> int:
         with open(file_path, 'rb') as f:
             data = f.read()
         r = random.Random(zlib.adler32(data))
-        score = r.triangular(0.5, 1, 0.85)
-        score = int(score * 100)
-    res = score if duration > 5 or score < 50 else 50
+        score = int(r.triangular(0.5, 1, 0.85) * 100)
+    res = min(score, int(duration * 11))
     return res
 
 
