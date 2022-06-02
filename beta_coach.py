@@ -115,15 +115,21 @@ def fluency_score(duration: float, file_path: str) -> int:
     return res
 
 
-def articulation_score(file_path: str) -> int:
+def articulation_score(duration: float, file_path: str) -> int:
     """Calculate articulation score based on audio content
+    :param duration: audio duration in seconds
     :param file_path: audio file path
     :return: score
     """
-    with open(file_path, 'rb') as f:
-        data = f.read()
-    checksum = zlib.crc32(data)
-    r = random.Random(checksum)
-    score = r.triangular(0.5, 1, 0.85)
-    res = int(score * 100)
+    try:
+        url = 'http://localhost:5620'
+        r = requests.post(url, data={'file_path': file_path}).text
+        score = int(r)
+    except Exception as e:
+        print(f'[Error] use alternative since: {e}')
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        r = random.Random(zlib.crc32(data))
+        score = int(r.triangular(0.5, 1, 0.85) * 100)
+    res = min(score, int(duration * 13))
     return res
