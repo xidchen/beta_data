@@ -58,22 +58,22 @@ def main():
             md_dict[md] = res
             return flask.jsonify(res)
         try:
-            wav_file_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
+            wav_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
         except FileNotFoundError:
             res = {'error_msg': 'input error'}
             print(res)
             md_dict[md] = res
             return flask.jsonify(res)
-        transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
+        transcript_path = beta_audio.replace_ext_to_txt(wav_path)
         t = ''.join(t)
         with open(transcript_path, 'w', encoding='utf-8') as f:
             f.write(t)
-        duration = beta_audio.get_duration(wav_file_path)
+        duration = beta_audio.get_duration(wav_path)
         rhetoric_score = beta_coach.rhetoric_score(r, t)
         keywords_score = beta_coach.keywords_score(k, t)
         speed_score = beta_coach.speed_score(duration, t)
-        fluency_score = beta_coach.fluency_score(duration, wav_file_path)
-        articulation_score = beta_coach.articulation_score(wav_file_path)
+        fluency_score = beta_coach.fluency_score(duration, wav_path)
+        articulation_score = beta_coach.articulation_score(duration, wav_path)
         res = {'scores': {'rhetoric': rhetoric_score,
                           'keywords': keywords_score,
                           'speed': speed_score,
@@ -91,16 +91,16 @@ def main():
         audio_file = v.rsplit('/', 1)[-1]
         audio_file = wu.secure_filename(audio_file)
         amr_file_path = beta_audio.get_amr_audio(v, audio_file, file_dir)
-        wav_file_path = beta_audio.convert_amr_to_wav(amr_file_path)
-        transcript_path = beta_audio.replace_ext_to_txt(wav_file_path)
+        wav_path = beta_audio.convert_amr_to_wav(amr_file_path)
+        transcript_path = beta_audio.replace_ext_to_txt(wav_path)
         with open(transcript_path, 'w', encoding='utf-8') as f:
             f.write(str(s))
-        duration = beta_audio.get_duration(wav_file_path)
+        duration = beta_audio.get_duration(wav_path)
         rhetoric_score = beta_coach.rhetoric_score(r, s)
         keywords_score = beta_coach.keywords_score(k, s)
         speed_score = beta_coach.speed_score(duration, s)
-        fluency_score = beta_coach.fluency_score(duration, wav_file_path)
-        articulation_score = beta_coach.articulation_score(wav_file_path)
+        fluency_score = beta_coach.fluency_score(duration, wav_path)
+        articulation_score = beta_coach.articulation_score(duration, wav_path)
         res = {'scores': {'rhetoric': rhetoric_score,
                           'keywords': keywords_score,
                           'speed': speed_score,
