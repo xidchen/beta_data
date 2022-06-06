@@ -129,10 +129,12 @@ def coach():
     t = flask.request.form.get('transcripts')
     if u and r and k and t:
         r = r.replace('\r', '').replace('\n', '').strip()
+        k = k.replace('\r', '').replace('\n', '').strip()
         data = {'urls': u, 'rhetoric': r, 'keywords': k, 'transcripts': t}
         res = json.loads(requests.post(url, data=data).text)
     elif v and r and k and s:
         r = r.replace('\r', '').replace('\n', '').strip()
+        k = k.replace('\r', '').replace('\n', '').strip()
         data = {'url': v, 'rhetoric': r, 'keywords': k, 'transcript': s}
         res = json.loads(requests.post(url, data=data).text)
     else:
