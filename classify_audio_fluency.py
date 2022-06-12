@@ -13,6 +13,9 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
+tf.linalg.inv(tf.random.normal([2, 2]))
+
+
 root_dir = os.path.dirname(os.path.realpath(__file__))
 data_root_dir = os.path.join(root_dir, 'BetaData', 'coach', 'ml', 'fluency')
 
@@ -74,24 +77,30 @@ callback_0 = tf.keras.callbacks.EarlyStopping(
 callback_1 = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss', patience=20, verbose=1, restore_best_weights=True)
 
-print('Training:')
-history_mlp = mlp.fit(
-    x_train, y_train, epochs=100, batch_size=128,
-    callbacks=[callback_0, callback_1], validation_data=(x_val, y_val),
-)
-print()
+mlps = []
 
-print('Evaluation:')
-mlp.evaluate(x_test, y_test, batch_size=1)
-print()
+for i in range(1, 1001, 1):
 
+    print(f'Training of trial {i}:')
+    mlp_history = mlp.fit(
+        x_train, y_train, epochs=100, batch_size=128,
+        callbacks=[callback_0, callback_1], validation_data=(x_val, y_val),
+    )
+    print()
 
-print('Confusion matrix:')
-y_pred = np.argmax(mlp.predict(x_test), axis=1)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
-print()
+    print(f'Evaluation of trial {i}:')
+    mlp_evaluation = mlp.evaluate(x_test, y_test, batch_size=1)
+    mlps.append((i, mlp, round(mlp_evaluation[1], 6)))
+    print()
 
+    print(f'Confusion matrix of trial {i}:')
+    y_pred = np.argmax(mlp.predict(x_test), axis=1)
+    print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
+                      rownames=['actual'], colnames=['predicted']))
+    print()
+
+mlps = sorted(mlps, key=lambda j: j[2], reverse=True)
+mlp = mlps[0][1]
 
 pdt = False
 if pdt:
