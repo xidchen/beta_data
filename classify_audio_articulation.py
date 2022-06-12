@@ -80,7 +80,7 @@ callback_1 = tf.keras.callbacks.EarlyStopping(
 
 mlps = []
 
-for i in range(1, 101, 1):
+for i in range(1, 1001, 1):
 
     print(f'Training of trial {i}:')
     mlp_history = mlp.fit(
@@ -101,6 +101,7 @@ for i in range(1, 101, 1):
     print()
 
 mlps = sorted(mlps, key=lambda j: j[2], reverse=True)
+mlp = mlps[0][1]
 
 pdt = False
 if pdt:
