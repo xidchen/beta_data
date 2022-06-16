@@ -112,7 +112,7 @@ def fluency_score(duration: float, file_path: str) -> int:
         r = random.Random(zlib.adler32(data))
         score = int(r.triangular(51, 100, 85))
     res = min(score, int(duration * 17))
-    res = res if res < 95 else 100
+    res = res if res < 96 else 100
     return res
 
 
@@ -133,5 +133,5 @@ def articulation_score(duration: float, file_path: str) -> int:
         r = random.Random(zlib.crc32(data))
         score = int(r.triangular(51, 100, 85))
     res = min(score, int(duration * 17))
-    res = res if res < 95 else 100
+    res = res if res < 96 else 100
     return res
