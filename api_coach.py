@@ -59,7 +59,7 @@ def main():
             return flask.jsonify(res)
         try:
             wav_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
-        except FileNotFoundError:
+        except (FileNotFoundError, IndexError):
             res = {'error_msg': 'input error'}
             print(res)
             md_dict[md] = res
