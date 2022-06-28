@@ -54,6 +54,8 @@ def rhetoric_score(rhetoric: str, transcript: str) -> int:
     :param transcript: user's ASR result
     :return: score
     """
+    rhetoric = rhetoric.lower()
+    transcript = transcript.lower()
     rhetorics = [rhetoric, drop_ending_punctuation(rhetoric)]
     transcripts = [transcript, drop_ending_punctuation(transcript)]
     se = semantic_embedding(rhetorics + transcripts)
@@ -69,6 +71,8 @@ def keywords_score(keywords: str, transcript: str) -> int:
     :param transcript: user's ASR result
     :return: score
     """
+    keywords = keywords.lower()
+    transcript = transcript.lower()
     keywords = split_by_semicolon(keywords)
     transcripts = split_sentence(transcript)
     se = semantic_embedding(keywords + transcripts)
