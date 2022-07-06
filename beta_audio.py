@@ -93,11 +93,13 @@ def get_wav_from_urls(urls: [str], file_dir: str, tmp_dir: str) -> str:
 
 
 def get_duration(file_path: str) -> float:
-    """Calculate duration (in seconds) of an audio file
+    """Calculate trimmed duration (in seconds) of an audio file
     :param file_path: WAV file path
     :return: duration (in seconds)
     """
-    return librosa.get_duration(filename=file_path)
+    y, sr = librosa.load(path=file_path, sr=None)
+    yt, _ = librosa.effects.trim(y=y, top_db=25)
+    return librosa.get_duration(y=yt, sr=sr)
 
 
 def get_bidu_asr_params() -> {}:
