@@ -98,7 +98,7 @@ def get_duration(file_path: str) -> float:
     :return: duration (in seconds)
     """
     y, sr = librosa.load(path=file_path, sr=None)
-    yt, _ = librosa.effects.trim(y=y, top_db=25)
+    yt, _ = librosa.effects.trim(y=y, top_db=20)
     return librosa.get_duration(y=yt, sr=sr)
 
 
