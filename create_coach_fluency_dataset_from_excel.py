@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import pandas as pd
 import re
@@ -32,3 +33,15 @@ for excel_file in os.listdir(excel_root_dir):
 print()
 print(f'Totally:  {data_count} files created.')
 print()
+
+print('Distribution:')
+grades, file_counts = [], []
+for fluency_dir in os.listdir(ml_dir):
+    grade = int(fluency_dir)
+    file_count = len(os.listdir(os.path.join(ml_dir, fluency_dir)))
+    print(f'grade {grade}: {file_count} files;')
+    grades = np.append(grades, grade)
+    file_counts = np.append(file_counts, file_count)
+
+print()
+print(f'Average grade: {np.inner(grades, file_counts) / data_count:.2f}')
