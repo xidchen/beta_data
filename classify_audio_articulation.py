@@ -41,20 +41,6 @@ n_features = features.shape[-1]
 n_classes = len(label_classes)
 
 
-# Train, valid, test split
-print('Data splitting')
-
-print(f'Dataset total length:   {len(labels)}')
-x_raw, x_test, y_raw, y_test, f_raw, f_test = sms.train_test_split(
-    features, labels, files, test_size=0.1, random_state=0, stratify=labels)
-x_train, x_val, y_train, y_val, f_train, f_val = sms.train_test_split(
-    x_raw, y_raw, f_raw, train_size=0.85, random_state=0, stratify=y_raw)
-print(f'Training set length:    {len(y_train)}')
-print(f'Validation set length:  {len(y_val)}')
-print(f'Test set length:        {len(y_test)}')
-print()
-
-
 # MLP
 print('MLP')
 
@@ -66,6 +52,7 @@ mlp = tf.keras.Sequential([
 ], name='mlp')
 
 mlp.summary()
+print()
 
 mlp.compile(
     optimizer=tf.optimizers.Adam(),
@@ -80,100 +67,87 @@ callback_1 = tf.keras.callbacks.EarlyStopping(
 
 mlps = []
 
-for i in range(1, 1001, 1):
+i_count = 100
+j_count = 10
 
-    print(f'Training of trial {i}:')
-    mlp_history = mlp.fit(
-        x_train, y_train, epochs=100, batch_size=128,
-        callbacks=[callback_0, callback_1], validation_data=(x_val, y_val),
-    )
+for i in range(i_count):
+
+    print(f'Data splitting (random_state: {i}')
+    print(f'Dataset total length:  {len(labels)}')
+    x_raw, x_test, y_raw, y_test, f_raw, f_test = sms.train_test_split(
+        features, labels, files, test_size=0.1, random_state=i, stratify=labels)
+    x_train, x_val, y_train, y_val, f_train, f_val = sms.train_test_split(
+        x_raw, y_raw, f_raw, train_size=0.85, random_state=i, stratify=y_raw)
+    print(f'Training set length:   {len(y_train)}')
+    print(f'Validation set length: {len(y_val)}')
+    print(f'Test set length:       {len(y_test)}')
     print()
 
-    print(f'Evaluation of trial {i}:')
-    mlp_evaluation = mlp.evaluate(x_test, y_test, batch_size=1)
-    mlps.append((i, mlp, round(mlp_evaluation[1], 6)))
-    print()
+    for j in range(j_count):
 
-    print(f'Confusion matrix of trial {i}:')
-    y_pred = np.argmax(mlp.predict(x_test), axis=1)
-    print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                      rownames=['actual'], colnames=['predicted']))
-    print()
+        shot = i * j_count + j + 1
+        print(f'Training of trial {shot} (i: {i}, j: {j}):')
+        mlp_history = mlp.fit(
+            x_train, y_train, epochs=100, batch_size=128, verbose=0,
+            callbacks=[callback_0, callback_1], validation_data=(x_val, y_val),
+        )
+        print()
 
-mlps = sorted(mlps, key=lambda j: j[2], reverse=True)
-mlp = mlps[0][1]
+        print(f'Evaluation of trial {shot} (i: {i}, j: {j}):')
+        mlp_loss, mlp_metrics = mlp.evaluate(x_test, y_test, batch_size=1)
+        mlps.append((shot, mlp, round(mlp_loss, 6), round(mlp_metrics, 6)))
+        print()
 
-pdt = False
-if pdt:
-    print('Prediction:')
-    for f in f_test:
-        features = np.array(beta_audio.feature_extraction(
-            f, dims=feature_dims, gate=feature_gate), ndmin=2)
-        pdt = mlp(features)
-        grades = [float(lc) * 11 for lc in label_classes]
-        score = int(tf.tensordot(pdt, grades, axes=1).numpy()[0])
-        pdt = [round(p, 4) for p in pdt.numpy()[0]]
-        pdt_label = [label_classes[np.argmax(pdt)]]
-        print(f'{f.split(os.sep)[-2:]}: {score}, {pdt_label}, {pdt}')
-    print()
+        print(f'Confusion matrix of trial {shot} (i: {i}, j: {j}):')
+        y_pred = np.argmax(mlp.predict(x_test), axis=1)
+        print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
+                          rownames=['actual'], colnames=['predicted']))
+        print()
 
+    pdt = False
+    if pdt:
+        print(f'Prediction (random_state: {i}):')
+        for f in f_test:
+            features = np.array(beta_audio.feature_extraction(
+                f, dims=feature_dims, gate=feature_gate), ndmin=2)
+            pdt = mlp(features)
+            grades = [float(lc) * 11 for lc in label_classes]
+            score = int(tf.tensordot(pdt, grades, axes=1).numpy()[0])
+            pdt = [round(p, 4) for p in pdt.numpy()[0]]
+            pdt_label = [label_classes[np.argmax(pdt)]]
+            print(f'{f.split(os.sep)[-2:]}: {score}, {pdt_label}, {pdt}')
+        print()
 
-print('SVM')
+    svm = False
+    if svm:
+        print(f'SVM (random_state: {i})')
+        svm = sklearn.svm.SVC(C=200, gamma=0.0001, probability=True,
+                              random_state=0)
+        svm.fit(x_raw, y_raw)
+        acc = svm.score(x_test, y_test)
+        print(f'Score: {acc:.4f}')
+        print()
 
-svm = sklearn.svm.SVC(C=200, gamma=0.0001, probability=True, random_state=0)
+    rf = False
+    if rf:
+        print(f'RF (random_state: {i})')
+        rf = se.RandomForestClassifier(n_estimators=350, random_state=0)
+        rf.fit(x_raw, y_raw)
+        acc = rf.score(x_test, y_test)
+        print(f'Score: {acc:.4f}')
+        print()
 
-print('Training:')
-svm.fit(x_raw, y_raw)
-print()
+    gbdt = False
+    if gbdt:
+        print(f'GBDT (random_state: {i})')
+        gbdt = se.GradientBoostingClassifier(n_estimators=350, random_state=0)
+        gbdt.fit(x_raw, y_raw)
+        acc = gbdt.score(x_test, y_test)
+        print(f'Score: {acc:.4f}')
+        print()
 
-print('Evalution:')
-acc = svm.score(x_test, y_test)
-print(f'Score: {acc:.4f}')
-print()
+mlps_sort_by_loss = sorted(mlps, key=lambda k: k[2])
+mlps_sort_by_metrics = sorted(mlps, key=lambda k: k[3], reverse=True)
+mlp = mlps_sort_by_loss[0][1]
 
-print('Confusion matrix:')
-y_pred = svm.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
-print()
-
-
-print('RF')
-
-rf = se.RandomForestClassifier(n_estimators=350, random_state=0)
-
-print('Training:')
-rf.fit(x_raw, y_raw)
-print()
-
-print('Evaluation:')
-acc = rf.score(x_test, y_test)
-print(f'Score: {acc:.4f}')
-print()
-
-print('Confusion matrix:')
-y_pred = rf.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
-print()
-
-
-print('GBDT')
-
-gbdt = se.GradientBoostingClassifier(n_estimators=350, random_state=0)
-
-print('Training:')
-gbdt.fit(x_raw, y_raw)
-print()
-
-print('Evaluation:')
-acc = gbdt.score(x_test, y_test)
-print(f'Score: {acc:.4f}')
-print()
-
-print('Confusion matrix:')
-y_pred = gbdt.predict(x_test)
-print(pd.crosstab(label_classes[y_test], label_classes[y_pred],
-                  rownames=['actual'], colnames=['predicted']))
-print()
 print()
