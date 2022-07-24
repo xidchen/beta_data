@@ -10,7 +10,7 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
-model_path = 'SavedModels/mlp_articulation_t2773_g20111_f65_sm'
+model_path = 'SavedModels/mlp_articulation_t2875_g20111_f88_sm'
 g = re.search(r'_g(\d+)_', model_path).group(1)
 f_dims = [int(d) for d in [g[:-3], g[-3:-2], g[-2:-1], g[-1]]]
 f_gate = [1 if d else 0 for d in f_dims]
