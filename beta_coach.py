@@ -27,7 +27,7 @@ def split_sentence(sentence: str) -> [str]:
     """
     punctuations = ['。', '！', '？', '，', ';', '：']
     pattern = '[' + ''.join(punctuations) + ']'
-    return [_s.strip() for _s in re.split(pattern, sentence) if _s.strip()]
+    return [s.strip() for s in re.split(pattern, sentence) if s.strip()]
 
 
 def split_by_semicolon(s: str) -> [str]:
@@ -80,6 +80,7 @@ def drop_unnecessary_whitespace(sentence: str) -> str:
     double_whitespace = whitespace * 2
     while double_whitespace in sentence:
         sentence = sentence.replace(double_whitespace, whitespace)
+    sentence = sentence.strip()
     whitespace_counts = sentence.count(whitespace)
     start = 0
     for _ in range(whitespace_counts):
