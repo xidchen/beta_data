@@ -55,6 +55,14 @@ def get_entity_code(entity_class: str) -> ({}, {}):
     return entity_name_to_code, entity_code_to_name
 
 
+def get_guess_code(entity_text: str, entity_type: str) -> {}:
+    """Request fuzzy match API, get the guess code and name of the entity"""
+    url = 'http://localhost:8090/match'
+    data = {'entity': entity_text, 'type': entity_type}
+    r = json.loads(requests.post(url, data=data).text)
+    return r['data']
+
+
 def get_perspective_and_event(event_classes: []) -> ([{}, {}], {}):
     """Fetch wp API, get mapping of wp name and id,
     and mapping of wp and event"""

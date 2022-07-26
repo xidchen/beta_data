@@ -28,7 +28,7 @@ def main():
         v = flask.request.form.get('v', '')
     res = {}
     if q:
-        print({'q': q})
+        print(f'Q: {q}')
         res['status'] = '200 OK'
         q = beta_utils.replace_token_for_bert(str(q).strip())
         intent = intent_classes[tf.argmax(
@@ -47,6 +47,26 @@ def main():
             e_type = entity[2]
             e_code = e_name_to_code.get(e_type, {}).get(e_text, '')
             if isinstance(e_code, str):
+                if not e_code:
+                    try:
+                        guess = beta_code.get_guess_code(e_text, e_type)
+                        if guess:
+                            for e_code in guess:
+                                if v:
+                                    e_name = e_code_to_name.get(
+                                        e_type, {}).get(e_code, '')
+                                    res['entities'].append(
+                                        {'code': e_code, 'text': e_text,
+                                         'guess': guess[e_code].lower(),
+                                         'type': e_type, 'name': e_name})
+                                else:
+                                    res['entities'].append(
+                                        {'code': e_code, 'text': e_text,
+                                         'guess': guess[e_code].lower(),
+                                         'type': e_type})
+                            continue
+                    except Exception:
+                        pass
                 if v:
                     e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
                     res['entities'].append(
