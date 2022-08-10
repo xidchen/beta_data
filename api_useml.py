@@ -25,7 +25,7 @@ def main():
     s2 = flask.request.form.get('s2', '')
     if s0:
         try:
-            s0 = eval(s0)
+            s0 = eval(s0.replace('\r', '').replace('\n', '').strip())
             assert isinstance(s0, list) is True
             print(f'S0 (len: {len(s0)}): {s0}')
             res = {'s0_embed': useml(s0).numpy().tolist()}
@@ -35,6 +35,8 @@ def main():
         return flask.jsonify(res)
     if s1 or s2:
         ml = 1000
+        s1 = s1.replace('\r', '').replace('\n', '').strip()
+        s2 = s2.replace('\r', '').replace('\n', '').strip()
         print(f'S1: {s1}')
         print(f'S2: {s2}')
         s1 = beta_utils.split_one_line_long_article(s1, ml) if s1 else []
