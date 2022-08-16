@@ -1,14 +1,10 @@
 import flask
 import json
+import numpy as np
 import os
 import requests
 import tempfile
-import tensorflow as tf
 import werkzeug.utils
-
-for device in tf.config.list_physical_devices('GPU'):
-    tf.config.experimental.set_memory_growth(device, True)
-tf.get_logger().setLevel('ERROR')
 
 
 app = flask.Flask(__name__)
@@ -19,11 +15,13 @@ def main():
     message = """
     Welcome to Beta API!
 
-    route                 parameters  example  
-    /chatbot              q           ?q=交银新成长混合和交银精选混合
-    /ols                  x, y        ?x=[[0,1],[2,3]]&y=[0,1]
-    /semantic_similarity  s1, s2      ?s1=Hi&s2=Hello
-    /bert_tokenizer       s           ?s=I love you
+    route                   parameters  example  
+    /chatbot                q           ?q=交银新成长混合和交银精选混合
+    /ols                    x, y        ?x=[[0,1],[2,3]]&y=[0,1]
+    /sentence_encoder       s0          ?s0=['Hi', 'Hello']
+    /semantic_similarity    s1, s2      ?s1=Hi&s2=Hello
+    /sentence_pair_encoder  s1, s2      ?s1=Hi&s2=Hello
+    /bert_tokenizer         s           ?s=I love you
     """
     return message
 
@@ -57,16 +55,16 @@ def ols():
 @app.route('/sentence_encoder', methods=['GET', 'POST'])
 def sentence_encoder():
     url = 'http://localhost:5300'
-    s, res = '', {}
+    s0, res = '', {}
     if flask.request.method == 'GET':
-        s = flask.request.args.get('s0', '')
+        s0 = flask.request.args.get('s0', '')
     if flask.request.method == 'POST':
-        s = flask.request.form.get('s0', '')
-    if s:
-        r = json.loads(requests.post(url, data={'s0': s}).text)
-        res = r['s0_embed']
+        s0 = flask.request.form.get('s0', '')
+    s0 = s0.replace('\r', '').replace('\n', '').strip()
+    if s0:
+        res = json.loads(requests.post(url, data={'s0': s0}).text)
     else:
-        res = []
+        res = {'error_msg': 'input error'}
     return flask.jsonify(res)
 
 
@@ -80,13 +78,29 @@ def semantic_similarity():
     if flask.request.method == 'POST':
         s1 = flask.request.form.get('s1', '')
         s2 = flask.request.form.get('s2', '')
+    s1 = s1.replace('\r', '').replace('\n', '').strip()
+    s2 = s2.replace('\r', '').replace('\n', '').strip()
     if s1 and s2:
         r = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
-        t = tf.reshape(tf.constant(r['s1_embed']), shape=[1, 512])
-        a = tf.reshape(tf.constant(r['s2_embed']), shape=[1, 512])
-        res = round(tf.einsum('ij,kj->ik', t, a).numpy().tolist()[0][0], 6)
+        res = np.inner(r['s1_embed'], r['s2_embed']).tolist()[0][0]
     else:
         res = 0
+    return flask.jsonify(res)
+
+
+@app.route('/sentence_pair_encoder', methods=['GET', 'POST'])
+def sentence_pair_encoder():
+    url = 'http://localhost:5300'
+    s1, s2, res = '', '', {}
+    if flask.request.method == 'GET':
+        s1 = flask.request.args.get('s1', '')
+        s2 = flask.request.args.get('s2', '')
+    if flask.request.method == 'POST':
+        s1 = flask.request.form.get('s1', '')
+        s2 = flask.request.form.get('s2', '')
+    s1 = s1.replace('\r', '').replace('\n', '').strip()
+    s2 = s2.replace('\r', '').replace('\n', '').strip()
+    res = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
     return flask.jsonify(res)
 
 
@@ -127,14 +141,12 @@ def coach():
     k = flask.request.form.get('keywords')
     s = flask.request.form.get('transcript')
     t = flask.request.form.get('transcripts')
+    r = r.replace('\r', '').replace('\n', '').strip()
+    k = k.replace('\r', '').replace('\n', '').strip()
     if u and r and k and t:
-        r = r.replace('\r', '').replace('\n', '').strip()
-        k = k.replace('\r', '').replace('\n', '').strip()
         data = {'urls': u, 'rhetoric': r, 'keywords': k, 'transcripts': t}
         res = json.loads(requests.post(url, data=data).text)
     elif v and r and k and s:
-        r = r.replace('\r', '').replace('\n', '').strip()
-        k = k.replace('\r', '').replace('\n', '').strip()
         data = {'url': v, 'rhetoric': r, 'keywords': k, 'transcript': s}
         res = json.loads(requests.post(url, data=data).text)
     else:
