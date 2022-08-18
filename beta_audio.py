@@ -77,7 +77,6 @@ def get_wav_from_urls(urls: [str], file_dir: str, tmp_dir: str) -> str:
             try:
                 amr_file_path = get_amr_audio(url, amr_file, tmp_dir)
                 wav_file_paths.append(convert_amr_to_wav(amr_file_path))
-                os.remove(amr_file_path)
             except requests.RequestException:
                 continue
     wav_data = []
