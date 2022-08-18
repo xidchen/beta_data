@@ -15,13 +15,14 @@ def main():
     message = """
     Welcome to Beta API!
 
-    route                   parameters  example  
-    /chatbot                q           ?q=交银新成长混合和交银精选混合
-    /ols                    x, y        ?x=[[0,1],[2,3]]&y=[0,1]
-    /sentence_encoder       s0          ?s0=['Hi', 'Hello']
-    /semantic_similarity    s1, s2      ?s1=Hi&s2=Hello
-    /sentence_pair_encoder  s1, s2      ?s1=Hi&s2=Hello
-    /bert_tokenizer         s           ?s=I love you
+    route                       parameters  example
+    /chatbot                    q           ?q=交银新成长混合和交银精选混合
+    /ols                        x, y        ?x=[[0,1],[2,3]]&y=[0,1]
+    /sentence_encoder           s0          ?s0=['Hi','Hello']
+    /semantic_similarity        s1, s2      ?s1=Hi&s2=Hello
+    /semantic_similarity_fast   s1, s2      ?s1=Hi&s2=Hello
+    /sentence_pair_encoder      s1, s2      ?s1=Hi&s2=Hello
+    /bert_tokenizer             s           ?s=I love you
     """
     return message
 
@@ -82,7 +83,27 @@ def semantic_similarity():
     s2 = s2.replace('\r', '').replace('\n', '').strip()
     if s1 and s2:
         r = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
-        res = np.inner(r['s1_embed'], r['s2_embed']).tolist()[0][0]
+        res = round(np.inner(r['s1_embed'], r['s2_embed']).tolist()[0][0], 4)
+    else:
+        res = 0
+    return flask.jsonify(res)
+
+
+@app.route('/semantic_similarity_fast', methods=['GET', 'POST'])
+def semantic_similarity_fast():
+    url = 'http://localhost:5310'
+    s1, s2, res = '', '', {}
+    if flask.request.method == 'GET':
+        s1 = flask.request.args.get('s1', '')
+        s2 = flask.request.args.get('s2', '')
+    if flask.request.method == 'POST':
+        s1 = flask.request.form.get('s1', '')
+        s2 = flask.request.form.get('s2', '')
+    s1 = s1.replace('\r', '').replace('\n', '').strip()
+    s2 = s2.replace('\r', '').replace('\n', '').strip()
+    if s1 and s2:
+        r = json.loads(requests.post(url, data={'s1': s1, 's2': s2}).text)
+        res = round(np.inner(r['s1_embed'], r['s2_embed']).tolist()[0][0], 4)
     else:
         res = 0
     return flask.jsonify(res)
@@ -90,7 +111,7 @@ def semantic_similarity():
 
 @app.route('/sentence_pair_encoder', methods=['GET', 'POST'])
 def sentence_pair_encoder():
-    url = 'http://localhost:5300'
+    url = 'http://localhost:5310'
     s1, s2, res = '', '', {}
     if flask.request.method == 'GET':
         s1 = flask.request.args.get('s1', '')
@@ -135,12 +156,12 @@ def ocr():
 @app.route('/coach', methods=['POST'])
 def coach():
     url = 'http://localhost:5600'
-    v = flask.request.form.get('url')
-    u = flask.request.form.get('urls')
-    r = flask.request.form.get('rhetoric')
-    k = flask.request.form.get('keywords')
-    s = flask.request.form.get('transcript')
-    t = flask.request.form.get('transcripts')
+    v = flask.request.form.get('url', '')
+    u = flask.request.form.get('urls', '')
+    r = flask.request.form.get('rhetoric', '')
+    k = flask.request.form.get('keywords', '')
+    s = flask.request.form.get('transcript', '')
+    t = flask.request.form.get('transcripts', '')
     r = r.replace('\r', '').replace('\n', '').strip()
     k = k.replace('\r', '').replace('\n', '').strip()
     if u and r and k and t:
