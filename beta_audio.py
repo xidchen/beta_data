@@ -37,10 +37,11 @@ def get_amr_audio(url: str, file_name: str, file_dir: str) -> str:
     if file_name and not file_name.endswith(AMR_EXTENSION):
         file_name += AMR_EXTENSION
     file_path = os.path.join(file_dir, file_name)
-    response = requests.get(url, stream=True, timeout=60)
-    with open(file_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=128):
-            f.write(chunk)
+    if not os.path.exists(file_path):
+        response = requests.get(url, stream=True, timeout=8)
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=128):
+                f.write(chunk)
     return file_path
 
 
