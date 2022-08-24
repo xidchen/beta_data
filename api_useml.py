@@ -11,6 +11,7 @@ tf.get_logger().setLevel('ERROR')
 
 
 MAX_LEN = 1000
+EXCERPT_LEN = 90
 
 useml = hub.load('https://tfhub.dev/google/'
                  'universal-sentence-encoder-multilingual-large/3')
@@ -29,6 +30,7 @@ def main():
         try:
             s0 = eval(s0)
             assert isinstance(s0, list) is True
+            s0 = [s[:MAX_LEN] for s in s0]
             print(f'S0 (len: {len(s0)}): {s0}')
             res = {'s0_embed': useml(s0).numpy().tolist()}
         except (NameError, SyntaxError) as e:
@@ -36,8 +38,8 @@ def main():
             res = {'error_msg': 'input error'}
         return flask.jsonify(res)
     if s1 or s2:
-        print(f'S1 (len: {len(s1)}): {s1[:100]}')
-        print(f'S2 (len: {len(s2)}): {s2[:100]}')
+        print(f'S1 (len: {len(s1)}): {s1[:EXCERPT_LEN]}')
+        print(f'S2 (len: {len(s2)}): {s2[:EXCERPT_LEN]}')
         s1 = beta_utils.split_one_line_long_article(s1, MAX_LEN) if s1 else []
         s2 = beta_utils.split_one_line_long_article(s2, MAX_LEN) if s2 else []
         q = s1 + s2 if s1 and s2 else s1 if s1 else s2

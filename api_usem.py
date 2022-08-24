@@ -10,6 +10,9 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
+MAX_LEN = 1000
+EXCERPT_LEN = 90
+
 usem = hub.load('https://tfhub.dev/google/'
                 'universal-sentence-encoder-multilingual/3')
 usem(['0'])
@@ -23,10 +26,10 @@ def main():
     s1 = flask.request.form.get('s1', '')
     s2 = flask.request.form.get('s2', '')
     if s1 or s2:
-        print(f'S1 (len: {len(s1)}): {s1[:100]}')
-        print(f'S2 (len: {len(s2)}): {s2[:100]}')
-        s1 = beta_utils.split_one_line_long_article(s1, 1000) if s1 else []
-        s2 = beta_utils.split_one_line_long_article(s2, 1000) if s2 else []
+        print(f'S1 (len: {len(s1)}): {s1[:EXCERPT_LEN]}')
+        print(f'S2 (len: {len(s2)}): {s2[:EXCERPT_LEN]}')
+        s1 = beta_utils.split_one_line_long_article(s1, MAX_LEN) if s1 else []
+        s2 = beta_utils.split_one_line_long_article(s2, MAX_LEN) if s2 else []
         q = s1 + s2 if s1 and s2 else s1 if s1 else s2
         q_embed = usem(q)
         s1_embed = tf.linalg.normalize(tf.reshape(
