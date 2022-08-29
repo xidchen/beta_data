@@ -39,6 +39,15 @@ def chatbot():
     return flask.jsonify(res)
 
 
+@app.route('/gamma_chatbot', methods=['POST'])
+def gamma_chatbot():
+    url = 'http://localhost:5110'
+    q = flask.request.form.get('q', '')
+    th = flask.request.form.get('th', '')
+    res = json.loads(requests.post(url, data={'q': q, 'th': th}).text)
+    return flask.jsonify(res)
+
+
 @app.route('/ols', methods=['GET', 'POST'])
 def ols():
     url = 'http://localhost:5200'
