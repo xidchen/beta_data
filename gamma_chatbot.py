@@ -40,7 +40,7 @@ def run_sentence_encoder_on_df(df: pd.DataFrame) -> [[float]]:
     :param df: the DataFrame of kt and sq
     :return: the sentence embeddings
     """
-    time.sleep(10.)
+    time.sleep(10)
     return run_sentence_encoder(df['sq'].tolist())
 
 
@@ -75,14 +75,25 @@ def collect_top_kt(df: pd.DataFrame, ss: [[float]], th: float) -> pd.DataFrame:
     return df.sort_values('ss', ascending=False).dropna().drop_duplicates('kt')
 
 
-def join_answer(df_l: pd.DataFrame, df_r: pd.DataFrame) -> {}:
+def join_answer(df_l: pd.DataFrame, df_r: pd.DataFrame, pspt: str) -> {}:
     """Join left DataFrame with right DataFrame
     :param df_l: the DataFrame of kt, sq and ss
     :param df_r: the DataFrame of the Excel file
+    :param pspt: the perspectives
     :return: the dict of kt, ss, answers, and else
     """
     kt, sq, ss = '知识标题', '相似问法', '相似度'
     df_l = df_l.rename(columns={'kt': kt, 'sq': sq, 'ss': ss})
     df_r = df_r[[c for c in df_r.columns if c.startswith('答案')]]
+    pspt = split_by_semicolon(pspt)
+    df_r = df_r[[c for c in df_r.columns for p in pspt if p in c]]
     return {'intents': [{k: v for k, v in r.items() if pd.notna(v)}
             for r in df_l.join(df_r).to_dict('records')]}
+
+
+def split_by_semicolon(s: str) -> [str]:
+    """Split a string by semicolon into list of strings
+    :param s: the string
+    :return: list of strings
+    """
+    return [_s.strip() for _s in s.split(';') if _s.strip()]
