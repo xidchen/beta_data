@@ -10,8 +10,8 @@ for device in tf.config.list_physical_devices('GPU'):
 tf.get_logger().setLevel('ERROR')
 
 
-MAX_LEN = 1000
-EXCERPT_LEN = 90
+MAX_LEN = 500
+EXCERPT_LEN = 100
 
 usem = hub.load('https://tfhub.dev/google/'
                 'universal-sentence-encoder-multilingual/3')
