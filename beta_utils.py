@@ -32,7 +32,7 @@ def split_one_line_long_article(_article: str, _max_len: int) -> [str]:
             cache_s += _char
         else:
             if _char == lower_quotation_mark:
-                if cache_s[-1] in s_terminators:
+                if cache_s and cache_s[-1] in s_terminators:
                     cache_s += _char
                     if len(cache_p + cache_s) <= _max_len:
                         cache_p += cache_s
@@ -47,7 +47,8 @@ def split_one_line_long_article(_article: str, _max_len: int) -> [str]:
                     if len(cache_p + cache_s) <= _max_len:
                         cache_p += cache_s
                     else:
-                        res.append(cache_p)
+                        if cache_p:
+                            res.append(cache_p)
                         cache_p = cache_s
                     cache_s = _char
                 else:
@@ -56,7 +57,8 @@ def split_one_line_long_article(_article: str, _max_len: int) -> [str]:
         if len(cache_p + cache_s) <= _max_len:
             cache_p += cache_s
         else:
-            res.append(cache_p)
+            if cache_p:
+                res.append(cache_p)
             cache_p = cache_s
     if cache_p:
         res.append(cache_p)
