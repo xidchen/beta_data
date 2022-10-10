@@ -55,14 +55,12 @@ def main():
         if not u or not t:
             res = {'error_msg': 'input error'}
             print(res)
-            md_dict[md] = res
             return flask.jsonify(res)
         try:
             wav_path = beta_audio.get_wav_from_urls(u, file_dir, tmp_dir)
         except (FileNotFoundError, IndexError):
             res = {'error_msg': 'input error'}
             print(res)
-            md_dict[md] = res
             return flask.jsonify(res)
         transcript_path = beta_audio.replace_ext_to_txt(wav_path)
         t = ''.join(t)
