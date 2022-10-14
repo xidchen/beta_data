@@ -51,7 +51,7 @@ for text_batch, label_batch in train_ds.take(1).cache():
 
 # Loading models from TensorFlow Hub
 
-tfhub_handle_encoder = "https://tfhub.dev/tensorflow/bert_zh_L-12_H-768_A-12/3"
+tfhub_handle_encoder = "https://tfhub.dev/tensorflow/bert_zh_L-12_H-768_A-12/4"
 tfhub_handle_preprocess = "https://tfhub.dev/tensorflow/bert_zh_preprocess/3"
 
 print(f'BERT model selected           : {tfhub_handle_encoder}')
@@ -195,7 +195,7 @@ print('Results from the model in memory:')
 print_my_examples(examples, original_results)
 
 
-# Inference of queries of large scales from an excel file
+# Inference of queries of large scales from an Excel file
 
 def inference_queries_from_excel():
     print('Inference of queries of large scales:')
