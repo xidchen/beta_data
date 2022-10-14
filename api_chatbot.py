@@ -94,7 +94,7 @@ def main():
 
 if __name__ == '__main__':
     intent_class_path = './intent_classes.txt'
-    intent_model_path = './SavedModels/beta_bert_intent_l367_t9520_c4_f84_sm'
+    intent_model_path = './SavedModels/beta_bert_intent_l367_t9530_e8_f85_sm'
     entity_class_path = './entity_classes.txt'
     entity_model_path = './SavedModels/beta_bert_entity_l7_t999_e3_bio_s1_h5'
     bert_model_config = 'bert_zh_L-12_H-768_A-12/4'
