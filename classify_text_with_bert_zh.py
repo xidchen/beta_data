@@ -120,7 +120,7 @@ loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 metrics = tf.metrics.SparseCategoricalAccuracy()
 
 # Optimizer
-epochs = 7
+epochs = 8
 steps_per_epoch = tf.data.experimental.cardinality(train_ds).numpy()
 num_train_steps = steps_per_epoch * epochs
 num_warmup_steps = int(.1 * num_train_steps)
