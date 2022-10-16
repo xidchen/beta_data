@@ -1,4 +1,5 @@
 import flask
+import hashlib
 import os
 
 import gamma_chatbot
@@ -15,9 +16,12 @@ sheet_name = '完整版本'
 default_p = '默认'
 default_t = .8
 
-df = gamma_chatbot.load_excel(file_path=file_path, sheet_name=sheet_name)
+df = gamma_chatbot.load_excel(file_path, sheet_name)
 df2 = gamma_chatbot.extract_kt_and_sq(df)
 se = gamma_chatbot.run_sentence_encoder_on_df(df2)
+
+
+md_dict = {}
 
 
 app = flask.Flask(__name__)
@@ -30,7 +34,13 @@ def main():
     t = flask.request.form.get('t', '')
     p = p if p else default_p
     t = t if t else default_t
-    print({'q': q, 'p': p, 't': t})
+    d = {'q': q, 'p': p, 't': t}
+    print(d)
+    md = hashlib.md5(str(d).encode('utf-8')).hexdigest()
+    if md in md_dict:
+        res = md_dict[md]
+        print(res)
+        return flask.jsonify(res)
     res = {}
     try:
         t = float(t)
@@ -45,6 +55,7 @@ def main():
         res = gamma_chatbot.join_answer(top_kt, df, p)
         res['status'] = '200 OK'
         print(res)
+        md_dict[md] = res
         return flask.jsonify(res)
     else:
         res['status'] = '400 Bad Request'
