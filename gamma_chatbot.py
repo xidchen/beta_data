@@ -1,8 +1,13 @@
 import json
 import numpy as np
+import os
 import pandas as pd
 import requests
 import time
+import werkzeug.datastructures as wd
+
+
+XLSX_EXTENTION = '.xlsx'
 
 
 def load_excel(file_path: str, sheet_name: str) -> pd.DataFrame:
@@ -35,12 +40,13 @@ def run_sentence_encoder(los: [str]) -> [float]:
     return json.loads(requests.post(u, data={'s0': str(los)}).text)['s0_embed']
 
 
-def run_sentence_encoder_on_df(df: pd.DataFrame) -> [[float]]:
+def run_sentence_encoder_on_df(df: pd.DataFrame, hd: bool) -> [[float]]:
     """Run sentence encoder on sq column
     :param df: the DataFrame of kt and sq
+    :param hd: whether it is a hot deployment
     :return: the sentence embeddings
     """
-    time.sleep(10)
+    time.sleep(0) if hd else time.sleep(20)
     return run_sentence_encoder(df['sq'].tolist())
 
 
@@ -97,3 +103,25 @@ def split_by_semicolon(s: str) -> [str]:
     :return: list of strings
     """
     return [_s.strip() for _s in s.split(';') if _s.strip()]
+
+
+def allowed_file(name: str) -> bool:
+    """
+    Check whether the file name has the allowed extension
+    :param name: file name
+    :return: True or False
+    """
+    return name.lower().endswith(XLSX_EXTENTION)
+
+
+def saved_excel_path(file: wd.FileStorage, directory: str) -> str:
+    """
+    Save Excel file in the request and return the path
+    :param file: Excel file in the request
+    :param directory: directory path to save the Excel file
+    :return: the path of the Excel file
+    """
+    file_name = str(int(time.time())) + XLSX_EXTENTION
+    file_path = os.path.join(directory, file_name)
+    file.save(file_path)
+    return file_path
