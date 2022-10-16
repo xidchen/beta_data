@@ -4,7 +4,7 @@ import numpy as np
 import os
 import requests
 import tempfile
-import werkzeug.utils
+import werkzeug.utils as wu
 
 
 app = flask.Flask(__name__)
@@ -45,7 +45,15 @@ def gamma_chatbot():
     q = flask.request.form.get('q', '')
     p = flask.request.form.get('p', '')
     t = flask.request.form.get('t', '')
-    res = json.loads(requests.post(url, data={'q': q, 'p': p, 't': t}).text)
+    x = flask.request.files.get('x')
+    if x:
+        xn = wu.secure_filename(x.filename)
+        xp = os.path.join(tempfile.gettempdir(), xn)
+        x.save(xp)
+        res = json.loads(requests.post(url, files={'x': open(xp, 'rb')}).text)
+        os.remove(xp)
+    else:
+        res = json.loads(requests.post(url, data={'q': q, 'p': p, 't': t}).text)
     return flask.jsonify(res)
 
 
@@ -152,7 +160,7 @@ def ocr():
     url = 'http://localhost:5500'
     file = flask.request.files.get('file')
     if file:
-        img_file = werkzeug.utils.secure_filename(file.filename)
+        img_file = wu.secure_filename(file.filename)
         img_file_path = os.path.join(tempfile.gettempdir(), img_file)
         file.save(img_file_path)
         files = {'file': open(img_file_path, 'rb')}
