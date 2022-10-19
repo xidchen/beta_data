@@ -38,8 +38,18 @@ def main():
             x_path = gamma_chatbot.saved_excel_path(x, data_root_path)
             m = {'x': x.filename, 'x_path': x_path}
             print(m)
-            df = gamma_chatbot.load_excel(x_path, sheet_name)
-            df2 = gamma_chatbot.extract_kt_and_sq(df)
+            try:
+                df = gamma_chatbot.load_excel(x_path, sheet_name)
+            except KeyError as e:
+                res['status'] = f'400 Bad Request: {e}'
+                print(res)
+                return flask.jsonify(res)
+            try:
+                df2 = gamma_chatbot.extract_kt_and_sq(df)
+            except KeyError as e:
+                res['status'] = f'400 Bad Request: {e}'
+                print(res)
+                return flask.jsonify(res)
             se = gamma_chatbot.run_sentence_encoder_on_df(df2, True)
             md_dict = {}
             res['status'] = '200 OK'
@@ -48,7 +58,7 @@ def main():
         else:
             m = {'x': x.filename}
             print(m)
-            res['status'] = '400 Bad Request'
+            res['status'] = f'400 Bad Request: {x.filename}'
             print(res)
             return flask.jsonify(res)
     p = p if p else default_p
@@ -62,8 +72,8 @@ def main():
         return flask.jsonify(res)
     try:
         t = float(t)
-    except ValueError:
-        res['status'] = '400 Bad Request'
+    except ValueError as e:
+        res['status'] = f'400 Bad Request: {e}'
         print(res)
         return flask.jsonify(res)
     if q and 0 < t <= 1:
