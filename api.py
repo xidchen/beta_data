@@ -45,8 +45,11 @@ def gamma_chatbot():
     q = flask.request.form.get('q', '')
     p = flask.request.form.get('p', '')
     t = flask.request.form.get('t', '')
+    j = flask.request.form.get('j', '')
     x = flask.request.files.get('x')
-    if x:
+    if j:
+        res = json.loads(requests.post(url, data={'j': j}).text)
+    elif x:
         xn = wu.secure_filename(x.filename)
         xp = os.path.join(tempfile.gettempdir(), xn)
         x.save(xp)
