@@ -19,6 +19,23 @@ def load_excel(file_path: str, sheet_name: str) -> pd.DataFrame:
     return pd.read_excel(file_path, sheet_name=sheet_name, engine='openpyxl')
 
 
+def load_json(json_str: str) -> pd.DataFrame:
+    """Load JSON from JSON string and return a DataFrame
+    :param json_str: the JSON string
+    :return: the DataFrame of the JSON string
+    """
+    json_str = transform_json_to_columns_format(json_str)
+    return pd.read_json(json_str, orient='columns')
+
+
+def transform_json_to_columns_format(json_str: str) -> str:
+    """Transform JSON in a specific format and return in 'columns' format
+    :param json_str: the JSON string in a specific format
+    :return: the JSON string in 'columns' format
+    """
+    return json_str
+
+
 def extract_kt_and_sq(df: pd.DataFrame) -> pd.DataFrame:
     """Extract kt and sq from certain columns
     :param df: the DataFrame of the Excel file
