@@ -31,8 +31,34 @@ def main():
     q = flask.request.form.get('q', '')
     p = flask.request.form.get('p', '')
     t = flask.request.form.get('t', '')
+    j = flask.request.form.get('j', '')
     x = flask.request.files.get('x')
     res = {}
+    if j:
+        m = {'j': j[:9] + '.' * 9 + j[-9:]}
+        print(m)
+        try:
+            df = gamma_chatbot.load_json(j)
+        except (KeyError, ValueError) as e:
+            res['status'] = f'400 Bad Request: {e}'
+            print(res)
+            return flask.jsonify(res)
+        try:
+            df2 = gamma_chatbot.extract_kt_and_sq(df)
+        except KeyError as e:
+            res['status'] = f'400 Bad Request: {e}'
+            print(res)
+            return flask.jsonify(res)
+        try:
+            se = gamma_chatbot.run_sentence_encoder_on_df(df2, True)
+        except KeyError as e:
+            res['status'] = f'400 Bad Request: {e}'
+            print(res)
+            return flask.jsonify(res)
+        md_dict = {}
+        res['status'] = '200 OK'
+        print(res)
+        return flask.jsonify(res)
     if x:
         if gamma_chatbot.allowed_file(x.filename):
             x_path = gamma_chatbot.saved_excel_path(x, data_root_path)
@@ -50,7 +76,12 @@ def main():
                 res['status'] = f'400 Bad Request: {e}'
                 print(res)
                 return flask.jsonify(res)
-            se = gamma_chatbot.run_sentence_encoder_on_df(df2, True)
+            try:
+                se = gamma_chatbot.run_sentence_encoder_on_df(df2, True)
+            except KeyError as e:
+                res['status'] = f'400 Bad Request: {e}'
+                print(res)
+                return flask.jsonify(res)
             md_dict = {}
             res['status'] = '200 OK'
             print(res)
