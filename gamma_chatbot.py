@@ -24,21 +24,134 @@ def load_json(json_str: str) -> pd.DataFrame:
     :param json_str: the JSON string
     :return: the DataFrame of the JSON string
     """
-    json_str = transform_json_to_columns_format(json_str)
-    return pd.read_json(json_str, orient='columns')
+    json_str = transform_json_to_records_format(json_str)
+    return pd.read_json(json_str, orient='records')
 
 
-def transform_json_to_columns_format(json_str: str) -> str:
-    """Transform JSON in a specific format and return in 'columns' format
+def transform_json_to_records_format(json_str: str) -> str:
+    """Transform JSON in a specific format and return in 'records' format
+    The specific JSON format is as the following python list:
+        [
+            {
+                "title": "xxxx",
+                "similarQuestion": ["xxxx", "xxxx"],
+                "answers":
+                    [
+                        {"vision": "答案xxx", "answer": "xxxx"},
+                        {"vision": "答案yyy", "answer": "xxxx"}
+                    ]
+            },
+            {
+                "title": "xxxx",
+                "similarQuestion": ["xxxx", "xxxx"],
+                "answers":
+                    [
+                        {"vision": "答案xxx", "answer": "xxxx"},
+                        {"vision": "答案yyy", "answer": "xxxx"}
+                    ]
+            }
+        ]
+    The 'records' format is as the following python list:
+        [
+            {
+                "知识标题": "xxxx",
+                "相似问法": "xxxx\nxxxx",
+                "答案xxx": "xxxx",
+                "答案yyy": "xxxx"
+            },
+            {
+                "知识标题": "xxxx",
+                "相似问法": "xxxx\nxxxx",
+                "答案xxx": "xxxx",
+                "答案yyy": "xxxx"
+            }
+        ]
+    Example:
+    The input JSON string can be as following:
+        [
+            {
+                "title": "小云是什么",
+                "similarQuestion": ["你好", "Bonjour"],
+                "answers":
+                    [{"vision": "答案（默认)【纯文本】",
+                      "answer": "甬电小云是一款云端机器人。
+                                ${\"id\":\"1460454896371298305\",\"type\":0}$"},
+                     {"vision": "答案（杭州)【纯文本】",
+                      "answer": null}]
+            },
+            {
+                "title": "电费帐单什么时候出？",
+                "similarQuestion": ["电费帐单什么时候出？","电费帐单什么时候出来？"],
+                "answers":
+                    [{"vision": "答案（默认)【纯文本】",
+                      "answer": "1.您好，每月供电公司根据合同约定的抄表时间进行抄表。\n
+                                 2.如果这不是您想要的"},
+                     {"vision": "答案（杭州)【纯文本】",
+                      "answer": null}]
+            }
+        ]
+    The intermediate JSON list can be as following:
+        [
+            {
+                'title': '小云是什么',
+                'similarQuestion': ['你好', 'Bonjour'],
+                'answers':
+                    [{'vision': '答案（默认)【纯文本】',
+                      'answer': '甬电小云是一款云端机器人。
+                                 ${"id":"1460454896371298305","type":0}$'},
+                     {'vision': '答案（杭州)【纯文本】',
+                      'answer': None}]
+            },
+            {
+                'title': '电费帐单什么时候出？',
+                'similarQuestion': ['电费帐单什么时候出？', '电费帐单什么时候出来？'],
+                'answers':
+                    [{'vision': '答案（默认)【纯文本】',
+                      'answer': '1.您好，每月供电公司根据合同约定的抄表时间进行抄表。\n
+                                 2.如果这不是您想要的'},
+                     {'vision': '答案（杭州)【纯文本】',
+                      'answer': None}]
+            }
+        ]
+    The output JSON string can be as following:
+        [
+            {
+                "知识标题": "小云是什么",
+                "相似问法": "你好\nBonjour",
+                "答案（默认)【纯文本】":
+                    "甬电小云是一款云端机器人。
+                     ${\"id\":\"1460454896371298305\",\"type\":0}$",
+                "答案（杭州)【纯文本】": null
+            },
+            {
+                "知识标题": "电费帐单什么时候出？",
+                "相似问法": "电费帐单什么时候出？\n电费帐单什么时候出来？",
+                "答案（默认)【纯文本】":
+                    "1.您好，每月供电公司根据合同约定的抄表时间进行抄表。\n
+                     2.如果这不是您想要的",
+                "答案（杭州)【纯文本】": null
+            }
+        ]
     :param json_str: the JSON string in a specific format
-    :return: the JSON string in 'columns' format
+    :return: the JSON string in 'records' format
     """
-    return json_str
+    kt, sq = '知识标题', '相似问法'
+    _te, _sn = 'title', 'similarQuestion'
+    _as, _vn, _ar = 'answers', 'vision', 'answer'
+    json_list = json.loads(json_str)
+    for d in json_list:
+        d[kt] = d.pop(_te)
+        d[sq] = '\n'.join(d.pop(_sn))
+        if _as in d:
+            for d_a in d[_as]:
+                d[d_a[_vn]] = d_a[_ar]
+            d.pop(_as)
+    return json.dumps(json_list, ensure_ascii=False)
 
 
 def extract_kt_and_sq(df: pd.DataFrame) -> pd.DataFrame:
     """Extract kt and sq from certain columns
-    :param df: the DataFrame of the Excel file
+    :param df: the DataFrame
     :return: the DataFrame of kt and sq
     """
     kt, sq = '知识标题', '相似问法'
