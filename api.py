@@ -13,7 +13,7 @@ app = flask.Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     message = """
-    Welcome to Beta API
+    Welcome to Beta API!
 
     route                       parameters  example
     /chatbot                    q           ?q=交银新成长混合和交银精选混合
@@ -42,11 +42,11 @@ def chatbot():
 @app.route('/gamma_chatbot', methods=['POST'])
 def gamma_chatbot():
     url = 'http://localhost:5110'
-    q = flask.request.form.get('q', '')
-    p = flask.request.form.get('p', '')
-    t = flask.request.form.get('t', '')
-    j = flask.request.form.get('j', '')
-    x = flask.request.files.get('x')
+    q = flask.request.form.get('query', '')
+    p = flask.request.form.get('perspective', '')
+    t = flask.request.form.get('threshold', '')
+    j = flask.request.form.get('json', '')
+    x = flask.request.files.get('excel')
     if j:
         res = json.loads(requests.post(url, data={'j': j}).text)
     elif x:

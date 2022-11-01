@@ -35,7 +35,7 @@ def main():
     x = flask.request.files.get('x')
     res = {}
     if j:
-        m = {'j': j[:9] + '.' * 9 + j[-9:]}
+        m = {'j': j[:99] + '.' * 9 + j[-99:]}
         print(m)
         try:
             df = gamma_chatbot.load_json(j)
