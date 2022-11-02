@@ -166,7 +166,7 @@ def run_sentence_encoder(los: [str]) -> [float]:
     :param los: list of sentences
     :return: the embeddings
     """
-    u = 'https://w-1.test.betawm.com/athena/sentence_encoder'
+    u = 'http://localhost:5300'
     return json.loads(requests.post(u, data={'s0': str(los)}).text)['s0_embed']
 
 

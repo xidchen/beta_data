@@ -41,7 +41,7 @@ def chatbot():
 
 @app.route('/gamma_chatbot', methods=['POST'])
 def gamma_chatbot():
-    url = 'http://localhost:5110'
+    url = 'http://localhost:5130'
     q = flask.request.form.get('query', '')
     p = flask.request.form.get('perspective', '')
     t = flask.request.form.get('threshold', '')
