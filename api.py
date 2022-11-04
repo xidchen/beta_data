@@ -54,12 +54,15 @@ def alpha_chatbot():
             xn = wu.secure_filename(x.filename)
             xp = os.path.join(tempfile.gettempdir(), xn)
             x.save(xp)
-            res = json.loads(
-                requests.post(url, files={'x': open(xp, 'rb')}).text)
+            files = {'x': open(xp, 'rb')}
+            res = json.loads(requests.post(url, files=files).text)
             os.remove(xp)
+        elif t and not q:
+            data = {'t': t}
+            res = json.loads(requests.post(url, data=data).text)
         else:
-            res = json.loads(
-                requests.post(url, data={'q': q, 't': t}).text)
+            data = {'q': q, 't': t}
+            res = json.loads(requests.post(url, data=data).text)
     return flask.jsonify(res)
 
 

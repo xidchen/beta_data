@@ -27,10 +27,12 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['POST'])
 def main():
-    global df, df2, se, kt_name_to_id, md_dict
+    global default_t, df, df2, se, kt_name_to_id, md_dict
     q = flask.request.form.get('q', '')
     t = flask.request.form.get('t', '')
     x = flask.request.files.get('x')
+    q = q.replace('\r', '').replace('\n', '').strip()
+    t = t.replace('\r', '').replace('\n', '').strip()
     res = {}
     if x:
         if alpha_chatbot.allowed_file(x.filename):
@@ -51,13 +53,32 @@ def main():
                 return flask.jsonify(res)
             kt_name_to_id = alpha_chatbot.get_kt_code()
             md_dict = {}
-            res['status'] = '200 OK'
+            res['status'] = '200 OK: excel updated'
             print(res)
             return flask.jsonify(res)
         else:
             m = {'x': x.filename}
             print(m)
             res['status'] = f'400 Bad Request: {x.filename}'
+            print(res)
+            return flask.jsonify(res)
+    if t and not q:
+        m = {'t': t}
+        print(m)
+        try:
+            t = float(t)
+        except ValueError as e:
+            res['status'] = f'400 Bad Request: {e}'
+            print(res)
+            return flask.jsonify(res)
+        if 0 < t <= 1:
+            default_t = t
+            md_dict = {}
+            res['status'] = f'200 OK: threshold updated to {t}'
+            print(res)
+            return flask.jsonify(res)
+        else:
+            res['status'] = '400 Bad Request'
             print(res)
             return flask.jsonify(res)
     t = t if t else default_t
