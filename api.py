@@ -13,7 +13,7 @@ app = flask.Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     message = """
-    Welcome to Beta API!
+    Welcome to Beta API
 
     route                       parameters  example
     /chatbot                    q           ?q=交银新成长混合和交银精选混合
@@ -36,6 +36,30 @@ def chatbot():
     if flask.request.method == 'POST':
         q = flask.request.form.get('q', '')
     res = json.loads(requests.post(url, data={'q': q}).text)
+    return flask.jsonify(res)
+
+
+@app.route('/alpha_chatbot', methods=['GET', 'POST'])
+def alpha_chatbot():
+    url = 'http://localhost:5110'
+    q, t, res = '', '', {}
+    if flask.request.method == 'GET':
+        q = flask.request.args.get('q', '')
+        res = json.loads(requests.post(url, data={'q': q}).text)
+    if flask.request.method == 'POST':
+        q = flask.request.form.get('q', '')
+        t = flask.request.form.get('t', '')
+        x = flask.request.files.get('x')
+        if x:
+            xn = wu.secure_filename(x.filename)
+            xp = os.path.join(tempfile.gettempdir(), xn)
+            x.save(xp)
+            res = json.loads(
+                requests.post(url, files={'x': open(xp, 'rb')}).text)
+            os.remove(xp)
+        else:
+            res = json.loads(
+                requests.post(url, data={'q': q, 't': t}).text)
     return flask.jsonify(res)
 
 
