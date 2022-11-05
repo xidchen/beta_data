@@ -6,6 +6,8 @@ import requests
 import time
 import werkzeug.datastructures as wd
 
+import beta_code
+
 
 XLSX_EXTENTION = '.xlsx'
 
@@ -55,13 +57,7 @@ def get_kt_code() -> {}:
     """Fetch intent API, get mapping of kt name and id
     :return: the mapping of kt name and id
     """
-    u = 'https://api.test.betawm.com/betacorpus/api/Purposes/all'
-    kt_name_to_id = {}
-    content = requests.get(u).text
-    if content:
-        rs = json.loads(content)
-        for v in rs:
-            kt_name_to_id[str(v['name'])] = str(v['id'])
+    kt_name_to_id, _ = beta_code.get_intent_code()
     return kt_name_to_id
 
 
