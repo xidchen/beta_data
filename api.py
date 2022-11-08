@@ -45,23 +45,23 @@ def alpha_chatbot():
     q, t, res = '', '', {}
     if flask.request.method == 'GET':
         q = flask.request.args.get('q', '')
-        res = json.loads(requests.post(url, data={'q': q}).text)
+        res = json.loads(requests.post(url, data={'query': q}).text)
     if flask.request.method == 'POST':
-        q = flask.request.form.get('q', '')
-        t = flask.request.form.get('t', '')
-        x = flask.request.files.get('x')
+        q = flask.request.form.get('query', '')
+        t = flask.request.form.get('threshold', '')
+        x = flask.request.files.get('excel')
         if x:
             xn = wu.secure_filename(x.filename)
             xp = os.path.join(tempfile.gettempdir(), xn)
             x.save(xp)
-            files = {'x': open(xp, 'rb')}
+            files = {'excel': open(xp, 'rb')}
             res = json.loads(requests.post(url, files=files).text)
             os.remove(xp)
         elif t and not q:
-            data = {'t': t}
+            data = {'threshold': t}
             res = json.loads(requests.post(url, data=data).text)
         else:
-            data = {'q': q, 't': t}
+            data = {'query': q, 'threshold': t}
             res = json.loads(requests.post(url, data=data).text)
     return flask.jsonify(res)
 

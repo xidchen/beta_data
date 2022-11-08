@@ -6,14 +6,14 @@ import alpha_chatbot
 
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
-data_root_path = os.path.join(root_dir, 'BetaData', 'alpha_chatbot')
+data_root_path = os.path.join(root_dir, 'BetaData', 'alpha_chatbot', 'data')
 
 
 file_name = 'demo_alpha_text.xlsx'
 file_path = os.path.join(data_root_path, file_name)
 sheet_name = 'Sheet1'
 
-default_t = .5
+default_t = 0.5
 
 df = alpha_chatbot.load_excel(file_path, sheet_name)
 df2 = alpha_chatbot.extract_kt_and_sq(df)
@@ -28,9 +28,9 @@ app = flask.Flask(__name__)
 @app.route('/', methods=['POST'])
 def main():
     global default_t, df, df2, se, kt_name_to_id, md_dict
-    q = flask.request.form.get('q', '')
-    t = flask.request.form.get('t', '')
-    x = flask.request.files.get('x')
+    q = flask.request.form.get('query', '')
+    t = flask.request.form.get('threshold', '')
+    x = flask.request.files.get('excel')
     q = q.replace('\r', '').replace('\n', '').strip()
     t = t.replace('\r', '').replace('\n', '').strip()
     res = {}
@@ -40,13 +40,19 @@ def main():
             m = {'x': x.filename, 'x_path': x_path}
             print(m)
             try:
-                df = gamma_chatbot.load_excel(x_path, sheet_name)
+                df = alpha_chatbot.load_excel(x_path, sheet_name)
             except KeyError as e:
                 res['status'] = f'400 Bad Request: {e}'
                 print(res)
                 return flask.jsonify(res)
             try:
-                se = alpha_chatbot.run_sentence_encoder_on_df(df, True)
+                df2 = alpha_chatbot.extract_kt_and_sq(df)
+            except KeyError as e:
+                res['status'] = f'400 Bad Request: {e}'
+                print(res)
+                return flask.jsonify(res)
+            try:
+                se = alpha_chatbot.run_sentence_encoder_on_df(df2, True)
             except KeyError as e:
                 res['status'] = f'400 Bad Request: {e}'
                 print(res)
