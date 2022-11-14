@@ -13,7 +13,7 @@ file_name = 'demo_alpha_text.xlsx'
 file_path = os.path.join(data_root_path, file_name)
 sheet_name = 'Sheet1'
 
-default_t = 0.5
+default_t = .5
 
 df = alpha_chatbot.load_excel(file_path, sheet_name)
 df2 = alpha_chatbot.extract_kt_and_sq(df)
@@ -108,7 +108,7 @@ def main():
         res = alpha_chatbot.organize_result(top_kt, kt_name_to_id)
         res['status'] = '200 OK'
         print(res)
-        res = alpha_chatbot.organize_final_result(res)
+        res = alpha_chatbot.organize_final_result(res, kt_name_to_id)
         md_dict[md] = res
         return flask.jsonify(res)
     else:

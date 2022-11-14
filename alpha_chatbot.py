@@ -124,10 +124,14 @@ def organize_result(df: pd.DataFrame, kt_name_to_id: {}) -> {}:
                         for r in df.to_dict('records')]}
 
 
-def organize_final_result(res: {}) -> {}:
+def organize_final_result(res: {}, kt_name_to_id: {}) -> {}:
     """Organize final result for output
     :param res: the result of status, intent and intents
-    :return: the result of status and intent
+    :param kt_name_to_id: the mapping of kt name and id
+    :return: the result of status, intent and intents (with name and id)
     """
-    res.pop('intents')
+    res['intents'] = [{'name': intent['kt'],
+                       'id': kt_name_to_id.get(intent['kt'], '')}
+                      for intent in res['intents'] if res['intents']]
+    res['intents'] = res['intents'] if res['intents'] else [res['intent']]
     return res
