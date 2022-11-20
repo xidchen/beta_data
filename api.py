@@ -34,8 +34,8 @@ def chatbot():
     if flask.request.method == 'GET':
         q = flask.request.args.get('q', '')
     if flask.request.method == 'POST':
-        q = flask.request.form.get('q', '')
-    res = json.loads(requests.post(url, data={'q': q}).text)
+        q = flask.request.form.get('query', '')
+    res = json.loads(requests.post(url, data={'query': q}).text)
     return flask.jsonify(res)
 
 
