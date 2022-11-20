@@ -40,7 +40,7 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['POST'])
 def main():
-    q = flask.request.form.get('query', '').strip()
+    q = flask.request.form.get('q', '').strip()
     print(f'Q: {q}')
     res = {}
     if q:
