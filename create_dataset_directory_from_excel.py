@@ -27,7 +27,7 @@ for label in df.label.unique():
     def write_data_into_dir(data, data_index, dataset_dir, copy_size):
         for copy_index in range(copy_size):
             with open(os.path.join(
-                    dataset_dir, '{}_{}.txt'.format(data_index, copy_index)),
+                    dataset_dir, f'{data_index}_{copy_index}.txt'),
                     mode='w', encoding='utf-8') as f:
                 f.write(beta_utils.replace_token_for_bert(data))
 
