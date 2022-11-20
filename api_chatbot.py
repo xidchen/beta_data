@@ -1,136 +1,57 @@
 import flask
-import official.nlp.bert.tokenization as onbt
-import os
-import tensorflow as tf
-import tensorflow_hub as hub
-import tensorflow_text
+import hashlib
 
-import beta_bert
+import beta_chatbot
 import beta_code
-import beta_utils
 
-for device in tf.config.list_physical_devices('GPU'):
-    tf.config.experimental.set_memory_growth(device, True)
-tf.get_logger().setLevel('ERROR')
+
+i_name_to_id, _ = beta_code.get_intent_code()
+print('Intent code loaded')
+entity_class_path = './entity_classes.txt'
+with open(entity_class_path, encoding='utf-8') as f:
+    entity_classes = f.read().strip().split('\n')
+e_name_to_code, e_code_to_name = {}, {}
+for e in entity_classes:
+    try:
+        e_name_to_code[e], e_code_to_name[e] = beta_code.get_entity_code(e)
+        print(f'Entity {e} code loaded')
+    except KeyError:
+        print(f'Entity {e} code not loaded')
+
+
+md_dict = {}
 
 
 app = flask.Flask(__name__)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['POST'])
 def main():
-    q, v = None, None
-    if flask.request.method == 'GET':
-        q = flask.request.args.get('q', '')
-        v = flask.request.args.get('v', '')
-    if flask.request.method == 'POST':
-        q = flask.request.form.get('q', '')
-        v = flask.request.form.get('v', '')
+    q = flask.request.form.get('query', '').strip()
+    v = flask.request.form.get('verbose', '').strip()
+    q = q.replace('\r', '').replace('\n', '')
+    v = True if v else False
+    m = f'Q: {q}\nV: {v}' if v else f'Q: {q}'
+    print(m)
     res = {}
+    md = hashlib.md5(str(m).encode('utf-8')).hexdigest()
+    if md in md_dict:
+        res = md_dict[md]
+        print(res)
+        return flask.jsonify(res)
     if q:
-        print(f'Q: {q}')
         res['status'] = '200 OK'
-        q = beta_utils.replace_token_for_bert(str(q).strip())
-        intent = intent_classes[tf.argmax(
-            tf.sigmoid(intent_model(tf.constant([q])))[0])]
+        intent = beta_chatbot.run_bert_intent(q)
         res['intent'] = {'id': i_name_to_id.get(intent, ''), 'name': intent}
-        entities = beta_bert.predict_entities_from_query(
-            _ner_model=entity_model,
-            _query=q,
-            _label_map=label_map,
-            _tokenizer=tokenizer,
-            _max_seq_len=max_seq_len,
-            _scheme=ner_tagging_scheme)
-        res['entities'] = []
-        for entity in entities:
-            e_text = q[entity[0]:entity[1]]
-            e_type = entity[2]
-            e_code = e_name_to_code.get(e_type, {}).get(e_text, '')
-            if isinstance(e_code, str):
-                if not e_code:
-                    try:
-                        guess = beta_code.get_guess_code(e_text, e_type)
-                        if guess:
-                            for e_code in guess:
-                                if v:
-                                    e_name = e_code_to_name.get(
-                                        e_type, {}).get(e_code, '')
-                                    res['entities'].append(
-                                        {'code': e_code, 'text': e_text,
-                                         'guess': guess[e_code].lower(),
-                                         'type': e_type, 'name': e_name})
-                                else:
-                                    res['entities'].append(
-                                        {'code': e_code, 'text': e_text,
-                                         'guess': guess[e_code].lower(),
-                                         'type': e_type})
-                            continue
-                    except Exception:
-                        pass
-                if v:
-                    e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
-                    res['entities'].append(
-                        {'code': e_code, 'text': e_text, 'type': e_type,
-                         'name': e_name})
-                else:
-                    res['entities'].append(
-                        {'code': e_code, 'text': e_text, 'type': e_type})
-            if isinstance(e_code, list):
-                e_code_list = e_code
-                for e_code in e_code_list:
-                    if v:
-                        e_name = e_code_to_name.get(e_type, {}).get(e_code, '')
-                        res['entities'].append(
-                            {'code': e_code, 'text': e_text, 'type': e_type,
-                             'name': e_name})
-                    else:
-                        res['entities'].append(
-                            {'code': e_code, 'text': e_text, 'type': e_type})
+        entities = beta_chatbot.run_bert_entity(q)
+        res['entities'] = beta_chatbot.get_query_entity(
+            q, v, entities, e_name_to_code, e_code_to_name)
     else:
         res['status'] = '400 Bad Request'
     print(res)
+    md_dict[md] = res
     return flask.jsonify(res)
 
 
 if __name__ == '__main__':
-    intent_class_path = './intent_classes.txt'
-    intent_model_path = './SavedModels/beta_bert_intent_l367_t9530_e8_f85_sm'
-    entity_class_path = './entity_classes.txt'
-    entity_model_path = './SavedModels/beta_bert_entity_l7_t999_e3_bio_s1_h5'
-    bert_model_config = 'bert_zh_L-12_H-768_A-12/4'
-    ner_tagging_scheme = 'BIO'
-    max_seq_len = 128
-    tokenizer = onbt.FullTokenizer(os.path.join(entity_model_path, 'vocab.txt'))
-    with open(intent_class_path, encoding='utf-8') as f:
-        intent_classes = f.read().strip().split('\n')
-    with open(entity_class_path, encoding='utf-8') as f:
-        entity_classes = f.read().strip().split('\n')
-    print(f'Intents size: {len(intent_classes)}')
-    print(f'Entities size: {len(entity_classes)}')
-    print(f'Intent model path: {intent_model_path}')
-    print(f'Entity model path: {entity_model_path}')
-    print(f'Entity tagging scheme: {ner_tagging_scheme}')
-    print(f'BERT model configuration: {bert_model_config}')
-    ner_labels = beta_bert.get_ner_labels(_base_labels=entity_classes,
-                                          _scheme=ner_tagging_scheme)
-    num_labels = len(ner_labels) + 1
-    label_map = {i: label for i, label in enumerate(ner_labels, 1)}
-    print(f'Label map: {label_map}')
-    intent_model = tf.saved_model.load(intent_model_path)
-    intent_model(tf.constant(['0']))
-    print('Intent model loaded')
-    entity_model = beta_bert.load_ner(_model_dir=entity_model_path,
-                                      _num_labels=num_labels,
-                                      _max_seq_len=max_seq_len)
-    print('Entity model loaded')
-    i_name_to_id, _ = beta_code.get_intent_code()
-    print('Intent code loaded')
-    e_name_to_code, e_code_to_name = {}, {}
-    for e in entity_classes:
-        try:
-            e_name_to_code[e], e_code_to_name[e] = beta_code.get_entity_code(e)
-            print(f'Entity {e} code loaded')
-        except KeyError:
-            print(f'Entity {e} code not loaded')
-            continue
     app.run('0.0.0.0', 5100)
