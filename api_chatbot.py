@@ -27,8 +27,8 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['POST'])
 def main():
-    q = flask.request.form.get('query', '').strip()
-    v = flask.request.form.get('verbose', '').strip()
+    q = flask.request.form.get('q', '').strip()
+    v = flask.request.form.get('v', '').strip()
     q = q.replace('\r', '').replace('\n', '')
     v = True if v else False
     m = f'Q: {q}\nV: {v}' if v else f'Q: {q}'
