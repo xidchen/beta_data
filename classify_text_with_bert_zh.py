@@ -1,16 +1,15 @@
 # Setup
 
+import official.nlp.optimization as ono
 import os
 import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from official.nlp import optimization
 
 import beta_utils
 
-physical_devices = tf.config.list_physical_devices('GPU')
-for device in physical_devices:
+for device in tf.config.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
 
@@ -56,39 +55,7 @@ tfhub_handle_preprocess = "https://tfhub.dev/tensorflow/bert_zh_preprocess/3"
 
 print(f'BERT model selected           : {tfhub_handle_encoder}')
 print(f'Preprocess model auto-selected: {tfhub_handle_preprocess}')
-
-
-# The preprocessing model
-
-bert_preprocess_model = hub.KerasLayer(tfhub_handle_preprocess)
-
-text_test = '什么是FOF基金'
-print(f'Text: {text_test}')
-text_test = beta_utils.replace_token_for_bert(text_test)
-
-text_preprocessed = bert_preprocess_model([text_test])
-
-print(f'Keys       : {list(text_preprocessed.keys())}')
-print(f'Shape      : {text_preprocessed["input_word_ids"].shape}')
-print(f'Word Ids   : {text_preprocessed["input_word_ids"][0, :12]}')
-print(f'Input Mask : {text_preprocessed["input_mask"][0, :12]}')
-print(f'Type Ids   : {text_preprocessed["input_type_ids"][0, :12]}')
-
-
-# Using the BERT model
-
-bert_model = hub.KerasLayer(tfhub_handle_encoder)
-bert_results = bert_model(text_preprocessed)
-
-print(f'Loaded BERT: {tfhub_handle_encoder}')
-print(f'Pooled Output Shape: {bert_results["pooled_output"].shape}')
-print(f'Pooled Output Values: {bert_results["pooled_output"][0, :1]}')
-print(f'Sequence Output Shape: {bert_results["sequence_output"].shape}')
-print(f'Sequence Output Values: {bert_results["sequence_output"][0, :1, :6]}')
-print(f'Encoder Outputs Shape: {bert_results["encoder_outputs"][0].shape}')
-for i in range(len(bert_results["encoder_outputs"])):
-    print(f'Encoder Block {i} Output Values: '
-          f'{bert_results["encoder_outputs"][i][0, :1, :6]}')
+print()
 
 
 # Define model
@@ -109,8 +76,6 @@ def build_classifier_model():
 
 
 classifier_model = build_classifier_model()
-bert_raw_result = classifier_model(tf.constant([text_test]))
-print(f'BERT Output Shape: {tf.sigmoid(bert_raw_result).shape}')
 
 
 # Model training
@@ -126,10 +91,10 @@ num_train_steps = steps_per_epoch * epochs
 num_warmup_steps = int(.1 * num_train_steps)
 
 init_lr = 3e-5
-optimizer = optimization.create_optimizer(init_lr=init_lr,
-                                          num_train_steps=num_train_steps,
-                                          num_warmup_steps=num_warmup_steps,
-                                          optimizer_type='adamw')
+optimizer = ono.create_optimizer(init_lr=init_lr,
+                                 num_train_steps=num_train_steps,
+                                 num_warmup_steps=num_warmup_steps,
+                                 optimizer_type='adamw')
 
 # Loading the BERT model and training
 classifier_model.compile(optimizer=optimizer,
@@ -152,19 +117,18 @@ print()
 
 print('Saving models:')
 saved_model_path = './beta_bert_intent'
-classifier_model.save(saved_model_path)
-print(f'model saved to {saved_model_path}')
+classifier_model.save(saved_model_path, include_optimizer=False)
+print(f'Model saved to {saved_model_path}')
 print()
 
-# reloaded_model = tf.saved_model.load(saved_model_path)
+reloaded_model = tf.saved_model.load(saved_model_path)
 
 
 # Inference of queries from examples
 
 def print_my_examples(inputs: [str], results: [float]):
     result_for_printing = [
-        'input: {:30} : class: {}'.format(
-            inputs[j], class_names[tf.argmax(results[j])])
+        f'input: {inputs[j]:30} : class: {class_names[tf.argmax(results[j])]}'
         for j in range(len(inputs))]
     print(*result_for_printing, sep='\n')
     print()
@@ -186,13 +150,13 @@ examples = [
 ]
 
 examples = [beta_utils.replace_token_for_bert(example) for example in examples]
-# reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
-original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
+reloaded_results = tf.sigmoid(reloaded_model(tf.constant(examples)))
+# original_results = tf.sigmoid(classifier_model(tf.constant(examples)))
 
-# print('Results from the saved model:')
-# print_my_examples(examples, reloaded_results)
-print('Results from the model in memory:')
-print_my_examples(examples, original_results)
+print('Results from the saved model:')
+print_my_examples(examples, reloaded_results)
+# print('Results from the model in memory:')
+# print_my_examples(examples, original_results)
 
 
 # Inference of queries of large scales from an Excel file
@@ -201,12 +165,12 @@ def inference_queries_from_excel():
     print('Inference of queries of large scales:')
     root_dir = os.path.dirname(os.path.realpath(__file__))
     data_root_dir = os.path.join(root_dir, 'BetaData')
-    data_file_str = os.path.join(data_root_dir, 'mydb.combined.xlsx')
+    data_file_str = os.path.join(data_root_dir, 'demo_beta_text.xlsx')
     df = pd.read_excel(data_file_str, names=['text'], engine='openpyxl')
     df['text'] = [beta_utils.replace_token_for_bert(text)
                   for text in df['text']]
     results = tf.sigmoid(
-        classifier_model.predict(
+        reloaded_model.predict(
             tf.constant(df['text']), batch_size=batch_size))
     df['label'] = [class_names[tf.argmax(results[j])]
                    for j in range(len(results))]
@@ -225,9 +189,8 @@ def inference_queries_from_excel():
 def predict_class_of_a_query(query: str):
     print('Inference of a query:')
     query = beta_utils.replace_token_for_bert(query)
-    result = tf.sigmoid(classifier_model(tf.constant([query])))
-    print('input: {:30} : class: {}'.format(
-        query, class_names[tf.argmax(result[0])]))
+    result = tf.sigmoid(reloaded_model(tf.constant([query])))
+    print(f'input: {query:30} : class: {class_names[tf.argmax(result[0])]}')
     print()
 
 
@@ -242,11 +205,11 @@ def predict_class_from_console_inputs():
     print('how many inputs (a positive integer): ', end='')
     size = int(input())
     for j in range(size):
-        print('input {}: '.format(j), end='')
+        print(f'input {j}: ', end='')
         query = input()
         query = beta_utils.replace_token_for_bert(query)
-        result = tf.sigmoid(classifier_model(tf.constant([query])))
-        print('class: {}'.format(class_names[tf.argmax(result[0])]))
+        result = tf.sigmoid(reloaded_model(tf.constant([query])))
+        print(f'class: {class_names[tf.argmax(result[0])]}')
 
 
 # predict_class_from_console_inputs()
