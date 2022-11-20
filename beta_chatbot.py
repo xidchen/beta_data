@@ -10,7 +10,7 @@ def run_bert_intent(query: str) -> str:
     :return: intent of query by BERT intent model
     """
     u = 'http://localhost:5410'
-    return json.loads(requests.post(u, data={'query': query}).text)['intent']
+    return json.loads(requests.post(u, data={'q': query}).text)['intent']
 
 
 def run_bert_entity(query: str) -> [[int, int, str]]:
@@ -19,7 +19,7 @@ def run_bert_entity(query: str) -> [[int, int, str]]:
     :return: list of start, end positions and type of entities
     """
     u = 'http://localhost:5420'
-    return json.loads(requests.post(u, data={'query': query}).text)['entities']
+    return json.loads(requests.post(u, data={'q': query}).text)['entities']
 
 
 def get_query_entity(query: str,
