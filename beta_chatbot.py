@@ -39,7 +39,7 @@ def get_query_entity(query: str,
     for entity in entities:
         e_text = query[entity[0]:entity[1]]
         e_type = entity[2]
-        e_code = e_name_to_code.get(e_type, {}).get(e_text, '')
+        e_code = e_name_to_code.get(e_type, {}).get(e_text.lower(), '')
         if isinstance(e_code, str):
             if not e_code:
                 try:
@@ -51,12 +51,12 @@ def get_query_entity(query: str,
                                     e_type, {}).get(e_code, '')
                                 res.append(
                                     {'code': e_code, 'text': e_text,
-                                     'guess': guess[e_code].lower(),
+                                     'guess': guess[e_code],
                                      'type': e_type, 'name': e_name})
                             else:
                                 res.append(
                                     {'code': e_code, 'text': e_text,
-                                     'guess': guess[e_code].lower(),
+                                     'guess': guess[e_code],
                                      'type': e_type})
                         continue
                 except Exception:
