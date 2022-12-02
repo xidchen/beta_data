@@ -6,29 +6,32 @@ import re
 import beta_code
 
 
-entity_class_path = './entity_classes.txt'
+root_dir = os.path.dirname(os.path.realpath(__file__))
+data_root_dir = os.path.join(root_dir, 'BetaData')
+
+
+entity_class_path = os.path.join(root_dir, 'entity_classes.txt')
 with open(entity_class_path, encoding='utf-8') as f:
     entity_classes = f.read().strip().split('\n')
 print(f'Entity class {entity_class_path} loaded')
+
 entity_pool = {}
 for e_class in entity_classes:
     try:
-        entities = list(beta_code.get_entity_code(e_class).keys())
+        entities = list(beta_code.get_entity_code(e_class)[0].keys())
         print(f'Entity list {e_class} loaded, {len(entities)} entities')
         entity_pool[e_class] = entities
     except KeyError:
         print(f'Entity list {e_class} not loaded')
-ner_template_path = './ner_template.txt'
+
+ner_template_path = os.path.join(root_dir, 'ner_template.txt')
 with open(ner_template_path, encoding='utf-8') as f:
     ner_templates = f.read().strip().split('\n')
 
-root_dir = os.path.dirname(os.path.realpath(__file__))
-data_root_dir = os.path.join(root_dir, 'BetaData')
-data_file_str = os.path.join(data_root_dir, 'demo_beta_ner_from_template.jsonl')
 
 ds = []
 copy_size = 1000
-start_id = 10000
+start_id = 100000
 for i, template in enumerate(ner_templates):
     for j in range(copy_size):
         t_copy = template
@@ -71,11 +74,11 @@ for i, template in enumerate(ner_templates):
                         break
             t_labels.sort()
             ds.append(
-                {'id': start_id + i * copy_size + j, 'text': t_copy, 'meta': {},
-                 'annotation approver': None, 'labels': t_labels})
+                {'id': start_id + i * copy_size + j, 'text': t_copy,
+                 'labels': t_labels})
 
+data_file_str = os.path.join(data_root_dir, 'demo_beta_ner_from_template.jsonl')
 with open(data_file_str, mode='w', encoding='utf-8') as f:
     for d in ds:
         f.write(json.dumps(d, ensure_ascii=False) + '\n')
 print(f'{data_file_str} done')
-exit(0)
