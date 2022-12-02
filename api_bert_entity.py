@@ -13,7 +13,7 @@ tf.get_logger().setLevel('ERROR')
 
 
 entity_class_path = './entity_classes.txt'
-entity_model_path = './SavedModels/beta_bert_entity_l7_t999_e3_bio_s1_h5'
+entity_model_path = './SavedModels/beta_bert_entity_l7_t999_e3_bio_s3_h5'
 bert_model_config = 'bert_zh_L-12_H-768_A-12/4'
 ner_tagging_scheme = 'BIO'
 max_seq_len = 128
