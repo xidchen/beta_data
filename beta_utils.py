@@ -2,8 +2,11 @@ import collections
 import re
 
 
-def replace_token_for_bert(_text: str) -> str:
-    """Replace token for BERT-zh tokenization and standardization"""
+def replace_token_for_bert(text: str) -> str:
+    """Replace token for BERT-zh tokenization and standardization
+    :param text: the input text
+    :return: the output text with token replaced
+    """
     replace_dict = {'“': '"',
                     '”': '"',
                     '‘': '\'',
@@ -12,49 +15,54 @@ def replace_token_for_bert(_text: str) -> str:
                     '）': ')',
                     '—': '-'}
     for k, v in replace_dict.items():
-        _text = _text.replace(k, v)
-    return _text.lower()
+        text = text.replace(k, v)
+    return text.lower()
 
 
-def split_one_line_long_article(_article: str, _max_len: int) -> [str]:
-    """Split a one line long article into paragraphs no longer than
-    the maximum length and at sentence terminating punctuations.
-    Suppose no sentence is longer than the maximum length."""
+def split_one_line_long_article(article: str, max_len: int) -> [str]:
+    """Split a one line long article into paragraphs as long as possible but
+    no longer than the maximum length, and at sentence terminating punctuation;
+    As long as the sentence is shorter than the maximum length,
+    sentence terminating punctuation can be skipped
+    :param article: the article in one line
+    :param max_len: the maximum length after splitting
+    :return: list of sentences after splitting
+    """
     s_terminators = ['。', '！', '？']
     lower_quotation_mark = '”'
     res = []
-    if len(_article) <= _max_len:
-        res.append(_article)
+    if len(article) <= max_len:
+        res.append(article)
         return res
     cache_p, cache_s = '', ''
-    for _char in _article:
-        if _char in s_terminators:
-            cache_s += _char
+    for char in article:
+        if char in s_terminators:
+            cache_s += char
         else:
-            if _char == lower_quotation_mark:
+            if char == lower_quotation_mark:
                 if cache_s and cache_s[-1] in s_terminators:
-                    cache_s += _char
-                    if len(cache_p + cache_s) <= _max_len:
+                    cache_s += char
+                    if len(cache_p + cache_s) <= max_len:
                         cache_p += cache_s
                     else:
                         res.append(cache_p)
                         cache_p = cache_s
                     cache_s = ''
                 else:
-                    cache_s += _char
+                    cache_s += char
             else:
                 if cache_s and cache_s[-1] in s_terminators:
-                    if len(cache_p + cache_s) <= _max_len:
+                    if len(cache_p + cache_s) <= max_len:
                         cache_p += cache_s
                     else:
                         if cache_p:
                             res.append(cache_p)
                         cache_p = cache_s
-                    cache_s = _char
+                    cache_s = char
                 else:
-                    cache_s += _char
+                    cache_s += char
     if cache_s:
-        if len(cache_p + cache_s) <= _max_len:
+        if len(cache_p + cache_s) <= max_len:
             cache_p += cache_s
         else:
             if cache_p:
@@ -65,72 +73,105 @@ def split_one_line_long_article(_article: str, _max_len: int) -> [str]:
     return res
 
 
-def split_paragraph(_paragraph: str,
-                    _max_len: int,
-                    _split: bool = False) -> [str]:
-    """Split paragraph at sentence terminating punctuations"""
+def split_paragraph(paragraph: str,
+                    max_len: int,
+                    split: bool = False) -> [str]:
+    """Split paragraph at sentence terminating punctuations
+    :param paragraph: the input paragraph
+    :param max_len: the maximum length
+    :param split: whether to split
+    :return: list of sentences
+    """
     s_terminators = ['。', '！', '？']
     lower_quotation_mark = '”'
     res = []
-    if _split:
-        if len(_paragraph) <= _max_len:
-            res.append(_paragraph)
+    if split:
+        if len(paragraph) <= max_len:
+            res.append(paragraph)
             return res
         cache = ''
-        for _char in _paragraph:
-            if _char in s_terminators:
-                cache += _char
+        for char in paragraph:
+            if char in s_terminators:
+                cache += char
             else:
-                if _char == lower_quotation_mark:
+                if char == lower_quotation_mark:
                     if cache[-1] in s_terminators:
-                        res.append(cache + _char)
+                        res.append(cache + char)
                         cache = ''
                     else:
-                        cache += _char
+                        cache += char
                 else:
                     if cache and cache[-1] in s_terminators:
                         res.append(cache)
-                        cache = _char
+                        cache = char
                     else:
-                        cache += _char
+                        cache += char
         if cache:
             res.append(cache)
     else:
-        res.append(_paragraph)
+        res.append(paragraph)
     return res
 
 
-def split_long_sentence(_sentence: str, _max_len: int) -> []:
-    """Split sentence at Chinese comma if length over max length,
-    and keep an overlap as long as possible to maintain coherence"""
+def split_long_sentence(sentence: str, max_len: int) -> [str]:
+    """Split sentence at Chinese comma if length is over max length,
+    and keep the overlap as long as possible to maintain coherence
+    :param sentence: the long sentence
+    :param max_len: the maximum length after splitting
+    :return: list of sentences
+    """
     comma = '，'
     res = []
-    _subs = _sentence.split(comma)
-    _subs[:-1] = [_sub + comma for _sub in _subs[:-1]]
-    _cur_sent = collections.deque()
-    _cur_len = 0
-    for i in range(len(_subs)):
-        _cur_len += len(_subs[i])
-        if _cur_len >= _max_len and _cur_sent:
-            res.append(''.join(_cur_sent))
-        _cur_sent.append(_subs[i])
-        while _cur_len > _max_len:
-            _cur_len -= len(_cur_sent.popleft())
-    if _cur_sent:
-        res.append(''.join(_cur_sent))
+    subs = sentence.split(comma)
+    subs[:-1] = [sub + comma for sub in subs[:-1]]
+    cur_sent = collections.deque()
+    cur_len = 0
+    for i in range(len(subs)):
+        cur_len += len(subs[i])
+        if cur_len >= max_len and cur_sent:
+            res.append(''.join(cur_sent))
+        cur_sent.append(subs[i])
+        while cur_len > max_len:
+            cur_len -= len(cur_sent.popleft())
+    if cur_sent:
+        res.append(''.join(cur_sent))
     return res
 
 
-def try_int(_s: str) -> int or str:
-    """Return an int if possible, or str unchanged"""
-    return int(_s) if _s.isdigit() else _s
+def adjust_label_offset(labels: [[int, int, str]],
+                        span: [int, int]) -> [[int, int, str]]:
+    """Adjust label offsets according to the sub-sentence span in the original;
+    concretely, select label and adjust its offsets if located in the span
+    :param labels: the start, end and type of entities in the original sentence
+    :param span: the span of sub-sentence in the original sentence
+    :return: the start, end and type of entities in the sub-sentence
+    """
+    res = []
+    for label in labels:
+        if span[0] <= label[0] and label[1] <= span[1]:
+            res.append([label[0] - span[0], label[1] - span[0], label[2]])
+    return res
 
 
-def alphanum_key(_s: str) -> [int or str]:
-    """Turn a string into a list of string and number chunks"""
-    return [try_int(_c) for _c in re.split(r'(\d+)', _s)]
+def sort_numerically(los: [str]) -> [str]:
+    """Sort a list numerically
+    :param los: list of strings
+    :return: list of strings
+    """
+    return sorted(los, key=alphanum_key)
 
 
-def sort_numerically(_l: [str]) -> [str]:
-    """Sort a list numerically"""
-    return sorted(_l, key=alphanum_key)
+def alphanum_key(s: str) -> [int or str]:
+    """Turn a string into a list of string and number chunks
+    :param s: a string
+    :return: list of strings or integers
+    """
+    return [try_int(c) for c in re.split(r'(\d+)', s)]
+
+
+def try_int(s: str) -> int or str:
+    """Return an int if possible, or str unchanged
+    :param s: a string
+    :return: convert str to int if the string is a number otherwise unchanged
+    """
+    return int(s) if s.isdigit() else s
