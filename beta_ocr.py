@@ -27,20 +27,25 @@ def run_ocr(image: str, mode: str) -> {}:
     """Run OCR on given image according to given mode
     :param image: image file path
     :param mode: 'bidu' or 'tess'
-    :return: ocr result
+    :return: OCR result
     """
     res = []
     if mode == 'bidu':
-        res = run_bidu_ocr(image)
+        res = run_bidu_ocr(image, basic=False)
     if mode == 'tess':
-        res = run_tess_ocr(image)
+        res = run_tess_ocr(image, basic=False)
+    if mode == 'bidu_basic':
+        res = run_bidu_ocr(image, basic=True)
+    if mode == 'tess_basic':
+        res = run_tess_ocr(image, basic=True)
     return res
 
 
-def run_bidu_ocr(image: str) -> {}:
+def run_bidu_ocr(image: str, basic: bool) -> {}:
     """Run Baidu OCR on given image
     :param image: image file path
-    :return: ocr result
+    :param basic: without coordinates if True
+    :return: OCR result
     """
     url = 'https://aip.baidubce.com/oauth/2.0/token'
     params = {'grant_type': 'client_credentials',
@@ -53,27 +58,32 @@ def run_bidu_ocr(image: str) -> {}:
     f = open(image, 'rb')
     im = base64.b64encode(f.read())
     data = {'image': im}
-    url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate'
+    if basic:
+        url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic'
+    else:
+        url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(url, data=data, params=params, headers=headers)
-    res = response.json()
-    return res
+    return response.json()
 
 
-def run_tess_ocr(image: str) -> {}:
+def run_tess_ocr(image: str, basic: bool) -> {}:
     """Run Tesseract OCR on given image
     :param image: image file path
-    :return: ocr result
+    :param basic: without coordinates if True
+    :return: OCR result
     """
     im = PIL.Image.open(image)
     im = im.resize(im.size, PIL.Image.LANCZOS)
+    if basic:
+        ss = pytesseract.image_to_string(im, lang='chi_sim', config='--dpi 300')
+        return {'words_result': [{'words': s} for s in ss.split('\n') if s]}
     df = pytesseract.image_to_data(im, lang='chi_sim', config='--dpi 300',
                                    output_type=pytesseract.Output.DATAFRAME)
     df = df.dropna(subset=['text'])
     df = df[df['text'] != ' ']
-    res = {'words_result': [{'location': {'height': int(df.at[i, 'height']),
-                                          'left': int(df.at[i, 'left']),
-                                          'top': int(df.at[i, 'top']),
-                                          'width': int(df.at[i, 'width'])},
-                             'words': df.at[i, 'text']} for i in df.index]}
-    return res
+    return {'words_result': [{'location': {'height': int(df.at[i, 'height']),
+                                           'left': int(df.at[i, 'left']),
+                                           'top': int(df.at[i, 'top']),
+                                           'width': int(df.at[i, 'width'])},
+                              'words': df.at[i, 'text']} for i in df.index]}
