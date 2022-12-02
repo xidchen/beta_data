@@ -13,7 +13,7 @@ app = flask.Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def main():
     message = """
-    Welcome to Beta API
+    Welcome to Beta API!
 
     route                       parameters  example
     /chatbot                    q           ?q=交银新成长混合和交银精选混合
@@ -188,6 +188,22 @@ def bert_tokenizer():
 @app.route('/ocr', methods=['POST'])
 def ocr():
     url = 'http://localhost:5500'
+    file = flask.request.files.get('file')
+    if file:
+        img_file = wu.secure_filename(file.filename)
+        img_file_path = os.path.join(tempfile.gettempdir(), img_file)
+        file.save(img_file_path)
+        files = {'file': open(img_file_path, 'rb')}
+        res = json.loads(requests.post(url, files=files).text)
+        os.remove(img_file_path)
+    else:
+        res = {'error_msg': 'image error'}
+    return flask.jsonify(res)
+
+
+@app.route('/ocr/basic', methods=['POST'])
+def ocr_basic():
+    url = 'http://localhost:5500/basic'
     file = flask.request.files.get('file')
     if file:
         img_file = wu.secure_filename(file.filename)
