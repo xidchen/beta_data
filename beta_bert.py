@@ -357,11 +357,16 @@ def ner_tagging_to_entity(_text: str,
             _idx += 1
     whitespaces = [_i for _i, _t in enumerate(_text) if _t == ' ']
     res = strip_whitespace(res, whitespaces)
+    res = remove_empty_type(res)
     return res
 
 
-def strip_whitespace(_ents: [[int, int, str]], _ws: [int]) -> []:
-    """Strip whitespace if entities have any on either ends"""
+def strip_whitespace(_ents: [[int, int, str]], _ws: [int]) -> [[int, int, str]]:
+    """Strip whitespace if an entity has one on either its end
+    :param _ents: entities before whitespece stripped
+    :param _ws: whitespece indexes
+    :return: entities after whitespace stripped
+    """
     for _ent in _ents:
         for _i in range(_ent[0], _ent[1] - 1, 1):
             if _i in _ws:
@@ -374,3 +379,11 @@ def strip_whitespace(_ents: [[int, int, str]], _ws: [int]) -> []:
             else:
                 break
     return _ents
+
+
+def remove_empty_type(_ents: [[int, int, str]]) -> [[int, int, str]]:
+    """Remove entity with an empty type
+    :param _ents: entities before empty type removed
+    :return: entities after empty type removed
+    """
+    return [[e[0], e[1], e[2]] for e in _ents if e[2]]
