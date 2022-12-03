@@ -77,7 +77,8 @@ def run_tess_ocr(image: str, basic: bool) -> {}:
     im = im.resize(im.size, PIL.Image.LANCZOS)
     if basic:
         ss = pytesseract.image_to_string(im, lang='chi_sim', config='--dpi 300')
-        return {'words_result': [{'words': s} for s in ss.split('\n') if s]}
+        return {'words_result': [{'words': s.replace(' ', '')}
+                                 for s in ss.split('\n') if s.split()]}
     df = pytesseract.image_to_data(im, lang='chi_sim', config='--dpi 300',
                                    output_type=pytesseract.Output.DATAFRAME)
     df = df.dropna(subset=['text'])
