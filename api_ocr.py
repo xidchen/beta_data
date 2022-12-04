@@ -25,16 +25,17 @@ def main():
         res_file_path = os.path.join(result_files_dir, res_file)
         file.save(img_file_path)
         res = beta_ocr.run_ocr(img_file_path, 'bidu')
+        if 'words_result' in res:
+            res = {'words_result': res['words_result']}
+            print({'bidu': img_file_path})
+            with open(res_file_path, 'w', encoding='utf-8') as f:
+                f.write(str(res))
+            return flask.jsonify(res)
         if 'error_msg' in res:
             print({'error_msg': res['error_msg']})
             res = beta_ocr.run_ocr(img_file_path, 'tess')
             print({'tess': img_file_path})
-        if 'words_result' in res:
-            res = {'words_result': res['words_result']}
-            print({'bidu': img_file_path})
-        with open(res_file_path, 'w', encoding='utf-8') as f:
-            f.write(str(res))
-        return flask.jsonify(res)
+            return flask.jsonify(res)
     else:
         res = {'error_msg': 'image error'}
         return flask.jsonify(res)
@@ -50,16 +51,24 @@ def basic():
         res_file_path = os.path.join(result_files_dir, res_file)
         file.save(img_file_path)
         res = beta_ocr.run_ocr(img_file_path, 'bidu_basic')
+        if 'words_result' in res:
+            res = {'words_result': res['words_result']}
+            print({'bidu_basic': img_file_path})
+            with open(res_file_path, 'w', encoding='utf-8') as f:
+                f.write(str(res))
+            return flask.jsonify(res)
+        if 'error_msg' in res:
+            print({'error_msg': res['error_msg']})
+            res = beta_ocr.run_ocr(img_file_path, 'bidu_basic_general')
+        if 'words_result' in res:
+            res = {'words_result': res['words_result']}
+            print({'bidu_basic_general': img_file_path})
+            return flask.jsonify(res)
         if 'error_msg' in res:
             print({'error_msg': res['error_msg']})
             res = beta_ocr.run_ocr(img_file_path, 'tess_basic')
             print({'tess_basic': img_file_path})
-        if 'words_result' in res:
-            res = {'words_result': res['words_result']}
-            print({'bidu_basic': img_file_path})
-        with open(res_file_path, 'w', encoding='utf-8') as f:
-            f.write(str(res))
-        return flask.jsonify(res)
+            return flask.jsonify(res)
     else:
         res = {'error_msg': 'image error'}
         return flask.jsonify(res)
