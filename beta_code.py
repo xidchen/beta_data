@@ -6,7 +6,7 @@ import beta_utils
 
 def get_intent_code() -> ({}, {}):
     """Fetch intent API, get mapping of intent name and id"""
-    intent_url = 'https://ws7.betawm.com/betacorpus/api/Purposes/all'
+    intent_url = 'https://ws7.betawm.com/betacorpus/Purposes/all'
     response = requests.get(intent_url)
     content = response.text
     intent_name_to_id, intent_id_to_name = dict(), dict()
@@ -21,13 +21,13 @@ def get_intent_code() -> ({}, {}):
 def get_entity_code(entity_class: str) -> ({}, {}):
     """Fetch entity API, get mapping of entity name and code for each class"""
     urls = dict()
-    urls['基金产品'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/1'
-    urls['基金经理'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/2'
-    urls['基金公司'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/3'
-    urls['保险产品'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/4'
-    urls['基金主题行业'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/5'
-    urls['保险险种'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/6'
-    urls['保险公司'] = 'https://ws7.betawm.com/betacorpus/api/SlotEntity/get/7'
+    urls['基金产品'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/1'
+    urls['基金经理'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/2'
+    urls['基金公司'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/3'
+    urls['保险产品'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/4'
+    urls['基金主题行业'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/5'
+    urls['保险险种'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/6'
+    urls['保险公司'] = 'https://ws7.betawm.com/betacorpus/SlotEntity/get/7'
     response = requests.get(urls[entity_class])
     content = response.text
     entity_name_to_code, entity_code_to_name = dict(), dict()
