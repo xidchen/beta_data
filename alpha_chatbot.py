@@ -40,7 +40,7 @@ def run_sentence_encoder_on_df(df: pd.DataFrame, hd: bool) -> [[float]]:
     :param hd: whether it is a hot deployment
     :return: the sentence embeddings
     """
-    time.sleep(0) if hd else time.sleep(20)
+    time.sleep(0) if hd else time.sleep(30)
     return run_sentence_encoder(df['sq'].tolist())
 
 
