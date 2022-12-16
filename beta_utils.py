@@ -1,4 +1,5 @@
 import collections
+import pandas as pd
 import re
 
 
@@ -175,3 +176,40 @@ def try_int(s: str) -> int or str:
     :return: convert str to int if the string is a number otherwise unchanged
     """
     return int(s) if s.isdigit() else s
+
+
+def is_cjk_character(char: str) -> bool:
+    """Check whether a character is a CJK character
+    :param char: the character
+    :return: whether the character is a CJK character
+    """
+    return True if int(0x4e00) <= ord(char) <= int(0x9fff) else False
+
+
+def drop_unnecessary_whitespace(sentence: str) -> str:
+    """Remove unnecessary whitespace in a sentence
+    :param sentence: the sentence
+    :return: the sentence without unnecessary whitespace
+    """
+    whitespace = ' '
+    double_whitespace = whitespace * 2
+    while double_whitespace in sentence:
+        sentence = sentence.replace(double_whitespace, whitespace)
+    sentence = sentence.strip()
+    whitespace_counts = sentence.count(whitespace)
+    start = 0
+    for _ in range(whitespace_counts):
+        w_index = start + sentence[start:].find(whitespace)
+        char_l, char_r = sentence[w_index - 1], sentence[w_index + 1]
+        if is_cjk_character(char_l) or is_cjk_character(char_r):
+            sentence = sentence[:w_index] + sentence[w_index + 1:]
+        start = w_index + 1
+    return sentence
+
+
+def drop_unnecessary_whitespace_in_series(series: pd.Series) -> pd.Series:
+    """Remove unnecessary whitespace in a pandas Series
+    :param series: the pandas Series
+    :return: the pandas Series without unnecssary whitespace
+    """
+    return series.apply(drop_unnecessary_whitespace)

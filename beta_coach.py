@@ -5,6 +5,8 @@ import re
 import requests
 import zlib
 
+import beta_utils
+
 
 CONTEXT_TOTAL_LENGTH = 12
 FOCUS_KEYWORD_MAX_RATIO = 4
@@ -63,35 +65,6 @@ def drop_punctuation(sentence: str) -> str:
     return sentence
 
 
-def is_cjk_character(char: str) -> bool:
-    """Check whether a character is a CJK character
-    :param char: the character
-    :return: whether the character is a CJK character
-    """
-    return True if int(0x4e00) <= ord(char) <= int(0x9fff) else False
-
-
-def drop_unnecessary_whitespace(sentence: str) -> str:
-    """Remove unnecessary whitespace in a sentence
-    :param sentence: the sentence
-    :return: the sentence without unnecessary whitespace
-    """
-    whitespace = ' '
-    double_whitespace = whitespace * 2
-    while double_whitespace in sentence:
-        sentence = sentence.replace(double_whitespace, whitespace)
-    sentence = sentence.strip()
-    whitespace_counts = sentence.count(whitespace)
-    start = 0
-    for _ in range(whitespace_counts):
-        w_index = start + sentence[start:].find(whitespace)
-        char_l, char_r = sentence[w_index - 1], sentence[w_index + 1]
-        if is_cjk_character(char_l) or is_cjk_character(char_r):
-            sentence = sentence[:w_index] + sentence[w_index + 1:]
-        start = w_index + 1
-    return sentence
-
-
 def get_focuses_on_transcript(rhetoric: str,
                               keywords: [str],
                               transcript: str) -> [str]:
@@ -103,9 +76,9 @@ def get_focuses_on_transcript(rhetoric: str,
     """
     focuses = set()
     rhetoric = drop_punctuation(rhetoric)
-    rhetoric = drop_unnecessary_whitespace(rhetoric)
+    rhetoric = beta_utils.drop_unnecessary_whitespace(rhetoric)
     transcript = drop_punctuation(transcript)
-    transcript = drop_unnecessary_whitespace(transcript)
+    transcript = beta_utils.drop_unnecessary_whitespace(transcript)
     for keyword in keywords:
         contexts = get_contexts_of_keyword(rhetoric, keyword)
         for context in contexts:
