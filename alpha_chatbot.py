@@ -81,6 +81,22 @@ def saved_excel_path(file: wd.FileStorage, directory: str) -> str:
     return file_path
 
 
+def request_beta_chatbot(q: str) -> {}:
+    """Request Chatbot API
+    :param q: the query
+    :return: the result of query and entities
+    """
+    u = 'http://localhost:5100'
+    return json.loads(requests.post(u, data={'q': q}).text)
+
+
+def allowed_beta_intents() -> set:
+    """Return an allowed set of Chatbot API intents
+    :return: set of intents
+    """
+    return {'了解某某基金产品'}
+
+
 def run_sentence_encoder_on_str(s: str) -> [float]:
     """Run sentence encoder on a sentence
     :param s: the sentence

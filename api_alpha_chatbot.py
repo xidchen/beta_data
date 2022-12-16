@@ -102,6 +102,11 @@ def main():
         print(res)
         return flask.jsonify(res)
     if q and 0 < t <= 1:
+        res = alpha_chatbot.request_beta_chatbot(q)
+        if res['intent']['name'] in alpha_chatbot.allowed_beta_intents():
+            print(res)
+            md_dict[md] = res
+            return flask.jsonify(res)
         qe = alpha_chatbot.run_sentence_encoder_on_str(q)
         ss = alpha_chatbot.calculate_similarity_scores(se, qe)
         top_kt = alpha_chatbot.collect_top_kt(df2, ss, t)
