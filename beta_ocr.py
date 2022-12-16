@@ -31,7 +31,7 @@ def run_ocr(image: str, mode: str) -> {}:
     """
     res = []
     if mode == 'bidu':
-        res = run_bidu_ocr(image, basic=False)
+        res = run_bidu_ocr(image)
     if mode == 'tess':
         res = run_tess_ocr(image, basic=False)
     if mode == 'bidu_basic':
@@ -40,14 +40,20 @@ def run_ocr(image: str, mode: str) -> {}:
         res = run_tess_ocr(image, basic=True)
     if mode == 'bidu_basic_general':
         res = run_bidu_ocr(image, basic=True, general=True)
+    if mode == 'bidu_table':
+        res = run_bidu_ocr(image, table=True)
     return res
 
 
-def run_bidu_ocr(image: str, basic: bool = False, general: bool = False) -> {}:
+def run_bidu_ocr(image: str,
+                 basic: bool = False,
+                 general: bool = False,
+                 table: bool = False) -> {}:
     """Run Baidu OCR on given image
     :param image: image file path
     :param basic: with coordinates if False
     :param general: accurate if False
+    :param table: with table if True
     :return: OCR result
     """
     url = 'https://aip.baidubce.com/oauth/2.0/token'
@@ -70,7 +76,10 @@ def run_bidu_ocr(image: str, basic: bool = False, general: bool = False) -> {}:
         if general:
             url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/general'
         else:
-            url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate'
+            if table:
+                url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/table'
+            else:
+                url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/accurate'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(url, data=data, params=params, headers=headers)
     return response.json()
