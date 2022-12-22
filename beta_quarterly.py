@@ -5,6 +5,9 @@ import os
 import pandas as pd
 import pdf2docx
 import requests
+import shutil
+import tabula
+import time
 
 import beta_utils
 
@@ -33,10 +36,11 @@ def run_sentence_encoder(los: [str]) -> [[float]]:
     return json.loads(requests.post(u, data={'s0': str(los)}).text)['s0_embed']
 
 
-def extract_tables_from_pdf_files_in_directory(data_path: str,
-                                               df_header: pd.DataFrame,
-                                               e_header: [[float]]) -> None:
-    """Extract tables from PDF files in a directory
+def extract_tables_from_pdf_files_in_dir_using_docx(data_path: str,
+                                                    df_header: pd.DataFrame,
+                                                    e_header: [[float]]
+                                                    ) -> None:
+    """Extract tables from PDF files in a directory using python-docx
     :param data_path: data path of PDF files
     :param df_header: pandas DataFrame of header sheet
     :param e_header: header embeddings in dims of (header count, embedding dim)
@@ -54,8 +58,8 @@ def extract_tables_from_pdf_files_in_directory(data_path: str,
             dfs = extract_tables_from_one_docx(temp_file_path,
                                                df_header,
                                                e_header)
-            print(*[df for df in dfs], sep='\n\n')
             os.remove(temp_file_path)
+            print(*[df for df in dfs], sep='\n\n')
             print()
 
 
@@ -282,3 +286,139 @@ def similarity_between_two_strs(s1: str, s2: str) -> float:
     """
     u = 'https://w-1.test.betawm.com/athena/semantic_similarity'
     return json.loads(requests.post(u, data={'s1': s1, 's2': s2}).text)
+
+
+def extract_tables_from_pdf_files_in_dir_using_tabula(data_path: str,
+                                                      df_header: pd.DataFrame,
+                                                      e_header: [[float]]
+                                                      ) -> None:
+    """Extract tables from PDF files in a directory using tabula-py
+    :param data_path: data path of PDF files
+    :param df_header: pandas DataFrame of header sheet
+    :param e_header: header embeddings in dims of (header count, embedding dim)
+    :return: None
+    """
+    for file_name in beta_utils.sort_numerically(os.listdir(data_path)):
+        if file_name.endswith(PDF_EXTENSION):
+            print(file_name)
+            file_path = os.path.join(data_path, file_name)
+            temp_file_name = str(time.time()) + PDF_EXTENSION
+            temp_file_path = os.path.join(data_path, temp_file_name)
+            shutil.copyfile(file_path, temp_file_path)
+            tables = tabula.read_pdf(temp_file_path,
+                                     guess=False, pages='all', lattice=True)
+            os.remove(temp_file_path)
+            dfs = []
+            for table in tables:
+                header = []
+                body = []
+                l2d = convert_df_to_list(table)
+                l2d = drop_useless_char_in_2d_list(l2d)
+                for row_text in l2d:
+                    row_text = do_specific_operations_on_list(row_text)
+                    if row_text_is_table_header(
+                            row_text, df_header, e_header) and not body:
+                        header.append(row_text)
+                    else:
+                        body.append(row_text)
+                header = combine_table_header(header)
+                if header:
+                    dfs = update_dfs_if_header(dfs, header, body)
+                else:
+                    dfs = update_dfs_if_not_header(dfs, body)
+                dfs = do_specific_operations_on_last_df(dfs)
+            print(*[df for df in dfs], sep='\n\n')
+            print()
+
+
+def convert_df_to_list(df: pd.DataFrame) -> [[str]]:
+    """Convert DataFrame into a list with columns names as the first element,
+    and the values as the remaining elements
+    :param df: a pandas DataFrame
+    :return: list of lists of string
+    """
+    columns = df.columns.astype(str).tolist()
+    data = df.values.astype(str).tolist()
+    data.insert(0, columns)
+    return data
+
+
+def drop_useless_char_in_2d_list(l2d: [[str]]) -> [[str]]:
+    """Remove unnecessary characters in a 2d list
+    :param l2d: 2d list
+    :return: 2d list without unnecessory characters
+    """
+    return [[drop_useless_char_in_str(c) for c in r] for r in l2d]
+
+
+def drop_useless_char_in_str(s: str) -> str:
+    """Remove unnecessary characters in a string
+    :param s: string
+    :return: string
+    """
+    s = s.replace('\n', ' ')
+    s = s.replace('\r', ' ')
+    s = s.replace('\t', ' ')
+    return beta_utils.drop_unnecessary_whitespace(s)
+
+
+def do_specific_operations_on_list(los: [str]) -> [str]:
+    """Do some specific operations on a list
+    :param los: list of string
+    :return: list of string after operations
+    """
+    los = [s.replace('nan', '') for s in los]
+    los = process_unnamed_string_in_list(los)
+    return los
+
+
+def process_unnamed_string_in_list(los: [str]) -> [str]:
+    """Process unnamed string in a list
+    :param: list of strings
+    :return: list of strings
+    """
+    count = 0
+    for s in los:
+        if 'unnamed' in s.lower():
+            count += 1
+    if count == 2:
+        los = process_two_unnamed_in_list(los)
+    return los
+
+
+def process_two_unnamed_in_list(los: [str]) -> [str]:
+    """Process a list that the number of elements containing 'unnamed' is 2
+    :param los: list of string
+    :return: list of string
+    """
+    if 'unnamed' in los[-1].lower() and 'unnamed' in los[-2].lower():
+        if len(los) >= 4:
+            los[-1] = los[-2] = los[-3]
+            los[-3] = los[-4]
+    return los
+
+
+def do_specific_operations_on_last_df(dfs: [pd.DataFrame]) -> [pd.DataFrame]:
+    """Do some specific operations of the last pandas DataFrame
+    :param dfs: list of pandas DataFrame
+    :return: list of pandas DataFrame after operations on the last DataFrame
+    """
+    c_name = '序号'
+    if c_name in dfs[-1].columns:
+        dfs[-1][c_name] = convert_float_str_to_int_str(dfs[-1][c_name])
+    return dfs
+
+
+def convert_float_str_to_int_str(series: pd.Series) -> pd.Series:
+    """Convert float string to int string
+    :param series: pandas Series
+    :return: pandas Series after conversion
+    """
+    los = series.to_list()
+    int_str_list = []
+    for s in los:
+        try:
+            int_str_list.append(str(int(float(s))))
+        except ValueError:
+            int_str_list.append(s)
+    return pd.Series(int_str_list)
