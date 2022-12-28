@@ -381,20 +381,46 @@ def process_unnamed_string_in_list(los: [str]) -> [str]:
     for s in los:
         if 'unnamed' in s.lower():
             count += 1
+    if count == 1:
+        los = process_1_unnamed_in_list(los)
     if count == 2:
-        los = process_two_unnamed_in_list(los)
+        los = process_2_unnamed_in_list(los)
+    if count == 3:
+        los = process_3_unnamed_in_list(los)
     return los
 
 
-def process_two_unnamed_in_list(los: [str]) -> [str]:
-    """Process a list that the number of elements containing 'unnamed' is 2
+def process_1_unnamed_in_list(los: [str]) -> [str]:
+    """Process a list that the number of elements containing 'Unnamed' is 1
     :param los: list of string
     :return: list of string
     """
-    if 'unnamed' in los[-1].lower() and 'unnamed' in los[-2].lower():
+    if 'Unnamed' in los[-1]:
+        if len(los) == 2:
+            los[-1] = ''
+    return los
+
+
+def process_2_unnamed_in_list(los: [str]) -> [str]:
+    """Process a list that the number of elements containing 'Unnamed' is 2
+    :param los: list of string
+    :return: list of string
+    """
+    if sum([s.count('Unnamed') for s in los[-2:]]) == 2:
         if len(los) >= 4:
             los[-1] = los[-2] = los[-3]
             los[-3] = los[-4]
+    return los
+
+
+def process_3_unnamed_in_list(los: [str]) -> [str]:
+    """Process a list that the number of elements containing 'Unnamed' is 3
+    :param los: list of string
+    :return: list of string
+    """
+    if sum([s.count('Unnamed') for s in los[-3:]]) == 3:
+        if len(los) == 4:
+            los[-1] = los[-2] = los[-3] = ''
     return los
 
 
