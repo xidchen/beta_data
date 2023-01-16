@@ -2,11 +2,9 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_text
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-for device in physical_devices:
+for device in tf.config.experimental.list_physical_devices('GPU'):
     tf.config.experimental.set_memory_growth(device, True)
 tf.get_logger().setLevel('ERROR')
-tf.constant(0)
 
 
 # Load class name

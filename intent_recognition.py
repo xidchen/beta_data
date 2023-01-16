@@ -3,9 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from official import nlp
-from official.nlp import bert
-import official.nlp.bert.tokenization
+import official.nlp.bert.tokenization as onbt
 
 import beta_utils
 
@@ -36,7 +34,7 @@ intent_model = tf.saved_model.load(saved_model_path)
 print(f'Model saved path: {saved_model_path}')
 print(f'Model configuration: {saved_model_config}')
 bert_vocab = os.path.join(saved_model_path, 'assets', 'vocab.txt')
-tokenizer = bert.tokenization.FullTokenizer(vocab_file=bert_vocab)
+tokenizer = onbt.FullTokenizer(vocab_file=bert_vocab)
 
 
 def inference_colleague_intent():

@@ -106,7 +106,7 @@ def is_special_none_tensor(tensor):
 
 # TODO(hongkuny): consider moving custom string-map lookup to keras api.
 def get_activation(identifier):
-    """Maps a identifier to a Python function, e.g., "relu" => `tf.nn.relu`.
+    """Maps an identifier to a Python function, e.g., "relu" => `tf.nn.relu`.
 
   It checks string first and if it is one of customized activation not in TF,
   the corresponding activation will be returned. For non-customized activation

@@ -2,9 +2,7 @@ import json
 import numpy as np
 import os
 import pandas as pd
-import random
 import requests
-import shutil
 import tensorflow as tf
 
 import beta_code

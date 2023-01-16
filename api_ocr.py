@@ -1,6 +1,5 @@
 import flask
 import os
-import shutil
 import werkzeug.utils
 
 import beta_ocr

@@ -1,9 +1,7 @@
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
 
 
-class MultiHeadSelfAttention(layers.Layer):
+class MultiHeadSelfAttention(tf.keras.layers.Layer):
     def __init__(self, embed_dim, num_heads=8):
         super(MultiHeadSelfAttention, self).__init__()
         self.embed_dim = embed_dim
@@ -14,10 +12,10 @@ class MultiHeadSelfAttention(layers.Layer):
                 f"should be divisible by number of heads = {num_heads}"
             )
         self.projection_dim = embed_dim // num_heads
-        self.query_dense = layers.Dense(embed_dim)
-        self.key_dense = layers.Dense(embed_dim)
-        self.value_dense = layers.Dense(embed_dim)
-        self.combine_heads = layers.Dense(embed_dim)
+        self.query_dense = tf.keras.layers.Dense(embed_dim)
+        self.key_dense = tf.keras.layers.Dense(embed_dim)
+        self.value_dense = tf.keras.layers.Dense(embed_dim)
+        self.combine_heads = tf.keras.layers.Dense(embed_dim)
 
     @staticmethod
     def attention(query, key, value):
@@ -60,19 +58,20 @@ class MultiHeadSelfAttention(layers.Layer):
         return output
 
 
-class TransformerBlock(layers.Layer):
+class TransformerBlock(tf.keras.layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
         self.att = MultiHeadSelfAttention(embed_dim, num_heads)
-        self.ffn = keras.Sequential(
-            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim)]
+        self.ffn = tf.keras.Sequential(
+            [tf.keras.layers.Dense(ff_dim, activation="relu"),
+             tf.keras.layers.Dense(embed_dim)]
         )
-        self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
-        self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
-        self.dropout1 = layers.Dropout(rate)
-        self.dropout2 = layers.Dropout(rate)
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = tf.keras.layers.Dropout(rate)
+        self.dropout2 = tf.keras.layers.Dropout(rate)
 
-    def call(self, inputs, training=None):
+    def call(self, inputs, training=None, **kwargs):
         attn_output = self.att(inputs)
         attn_output = self.dropout1(attn_output, training=training)
         out1 = self.layernorm1(inputs + attn_output)
@@ -81,12 +80,12 @@ class TransformerBlock(layers.Layer):
         return self.layernorm2(out1 + ffn_output)
 
 
-class TokenAndPositionEmbedding(layers.Layer):
+class TokenAndPositionEmbedding(tf.keras.layers.Layer):
     def __init__(self, maxlen, vocab_size, embed_dim):
         super(TokenAndPositionEmbedding, self).__init__()
-        self.token_emb = layers.Embedding(
+        self.token_emb = tf.keras.layers.Embedding(
             input_dim=vocab_size, output_dim=embed_dim)
-        self.pos_emb = layers.Embedding(
+        self.pos_emb = tf.keras.layers.Embedding(
             input_dim=maxlen, output_dim=embed_dim)
 
     def call(self, x, **kwargs):
@@ -100,33 +99,33 @@ if __name__ == '__main__':
 
     vocabulary_size = 30000  # Only consider the top 30k words
     maxlength = 400  # Only consider the first 400 words of each movie review
-    (x_train, y_train), (x_val, y_val) = keras.datasets.imdb.load_data(
+    (x_train, y_train), (x_val, y_val) = tf.keras.datasets.imdb.load_data(
         num_words=vocabulary_size)
     print(len(x_train), "Training sequences")
     print(len(x_val), "Validation sequences")
-    x_train = keras.preprocessing.sequence.pad_sequences(
+    x_train = tf.keras.preprocessing.sequence.pad_sequences(
         x_train, maxlen=maxlength)
-    x_val = keras.preprocessing.sequence.pad_sequences(
+    x_val = tf.keras.preprocessing.sequence.pad_sequences(
         x_val, maxlen=maxlength)
 
     embed_dimension = 128  # Embedding size for each token
     number_heads = 8  # Number of attention heads
     ff_dimension = 128  # Hidden layer size in ff network inside transformer
 
-    layer_inputs = layers.Input(shape=(maxlength,))
+    layer_inputs = tf.keras.layers.Input(shape=(maxlength,))
     embedding_layer = TokenAndPositionEmbedding(
         maxlength, vocabulary_size, embed_dimension)
     x_v = embedding_layer(layer_inputs)
     transformer_block = TransformerBlock(
         embed_dimension, number_heads, ff_dimension)
     x_v = transformer_block(x_v)
-    x_v = layers.GlobalAveragePooling1D()(x_v)
-    x_v = layers.Dropout(0.1)(x_v)
-    x_v = layers.Dense(20, activation="relu")(x_v)
-    x_v = layers.Dropout(0.1)(x_v)
-    outputs = layers.Dense(2, activation="softmax")(x_v)
+    x_v = tf.keras.layers.GlobalAveragePooling1D()(x_v)
+    x_v = tf.keras.layers.Dropout(0.1)(x_v)
+    x_v = tf.keras.layers.Dense(20, activation="relu")(x_v)
+    x_v = tf.keras.layers.Dropout(0.1)(x_v)
+    outputs = tf.keras.layers.Dense(2, activation="softmax")(x_v)
 
-    model = keras.Model(inputs=layer_inputs, outputs=outputs)
+    model = tf.keras.Model(inputs=layer_inputs, outputs=outputs)
     model.compile(
         "adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
     history = model.fit(

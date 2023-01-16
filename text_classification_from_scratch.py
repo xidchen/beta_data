@@ -1,10 +1,6 @@
-import tensorflow as tf
-
-from tensorflow.keras.layers.experimental.preprocessing import TextVectorization
-import string
 import re
-
-from tensorflow.keras import layers
+import string
+import tensorflow as tf
 
 
 batch_size = 32
@@ -76,7 +72,7 @@ sequence_length = 500
 # and the custom standardization defined above.
 # We also set an explicit maximum sequence length, since the CNNs later in our
 # model won't support ragged sequences.
-vectorize_layer = TextVectorization(
+vectorize_layer = tf.keras.layers.experimental.preprocessing.TextVectorization(
     standardize=custom_standardization,
     max_tokens=max_features,
     output_mode="int",
@@ -109,29 +105,29 @@ val_ds = val_ds.cache().prefetch(buffer_size=10)
 test_ds = test_ds.cache().prefetch(buffer_size=10)
 
 
-# A integer input for vocab indices.
+# An integer input for vocab indices.
 inputs = tf.keras.Input(shape=(None,), dtype="int64")
 
 # Next, we add a layer to map those vocab indices into a space of dimensionality
 # 'embedding_dim'.
-x = layers.Embedding(max_features, embedding_dim)(inputs)
-x = layers.Dropout(0.5)(x)
+x = tf.keras.layers.Embedding(max_features, embedding_dim)(inputs)
+x = tf.keras.layers.Dropout(0.5)(x)
 
 
 def conv1d(v):
-    v = layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(v)
-    v = layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(v)
-    v = layers.GlobalMaxPooling1D()(v)
+    v = tf.keras.layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(v)
+    v = tf.keras.layers.Conv1D(128, 7, padding="valid", activation="relu", strides=3)(v)
+    v = tf.keras.layers.GlobalMaxPooling1D()(v)
 
     # We add a vanilla hidden layer:
-    v = layers.Dense(128, activation="relu")(v)
-    return layers.Dropout(0.5)(v)
+    v = tf.keras.layers.Dense(128, activation="relu")(v)
+    return tf.keras.layers.Dropout(0.5)(v)
 
 
 def bilstm(v):
-    v = layers.Bidirectional(layers.LSTM(
+    v = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
         64, return_sequences=True, dropout=0.1))(v)
-    v = layers.Bidirectional(layers.LSTM(
+    v = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
         64, dropout=0.1))(v)
     return v
 
@@ -144,7 +140,7 @@ x = conv1d(x)
 
 
 # We project onto a single unit output layer, and squash it with a sigmoid:
-predictions = layers.Dense(1, activation="sigmoid", name="predictions")(x)
+predictions = tf.keras.layers.Dense(1, activation="sigmoid", name="predictions")(x)
 
 model = tf.keras.Model(inputs, predictions)
 

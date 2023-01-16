@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
-import sys
 import tensorflow.compat.v1 as tf
 
 import clustering_data
