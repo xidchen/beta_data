@@ -18,7 +18,7 @@ def allowed_file(name: str) -> bool:
 def replace_ext_to_txt(name: str) -> str:
     """Repalce the file extension to .txt
     :param name: original file name
-    :return: file name whose extension replaced with .txt
+    :return: the file name whose extension replaced with .txt
     """
     return name.replace(name.rsplit('.', 1)[1], 'txt')
 
@@ -50,7 +50,7 @@ def run_bidu_ocr(image: str,
                  general: bool = False,
                  table: bool = False) -> {}:
     """Run Baidu OCR on given image
-    :param image: image file path
+    :param image: the image file path
     :param basic: with coordinates if False
     :param general: accurate if False
     :param table: with table if True
@@ -87,7 +87,7 @@ def run_bidu_ocr(image: str,
 
 def run_tess_ocr(image: str, basic: bool) -> {}:
     """Run Tesseract OCR on given image
-    :param image: image file path
+    :param image: the image file path
     :param basic: without coordinates if True
     :return: OCR result
     """

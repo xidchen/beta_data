@@ -42,7 +42,7 @@ def split_by_semicolon(s: str) -> [str]:
 
 def drop_ending_punctuation(sentence: str) -> str:
     """Remove punctuation at the end of a sentence
-    :param sentence: the sentence
+    :param sentence: the input sentence
     :return: the sentence without ending punctuation
     """
     punctuations = ['。', '！', '？', '，', ';', '：']
@@ -56,7 +56,7 @@ def drop_ending_punctuation(sentence: str) -> str:
 
 def drop_punctuation(sentence: str) -> str:
     """Remove punctuations in a sentence
-    :param sentence: the sentence
+    :param sentence: the input sentence
     :return: the sentence without punctuation
     """
     punctuations = ['。', '！', '？', '，', ';', '：', '、']

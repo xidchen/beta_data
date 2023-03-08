@@ -18,7 +18,7 @@ DOCX_EXTENSION = '.docx'
 
 
 def get_df_header_from_excel(file_path: str) -> pd.DataFrame:
-    """Get pandas DataFrame of quarterly table header from an Excel file
+    """Get pandas DataFrame of quarterly table header
     :param file_path: Excel file path of table header
     :return: a pandas DataFrame
     """
@@ -280,8 +280,8 @@ def similarity_between_two_lists(l1: [str], l2: [str]) -> float:
 
 def similarity_between_two_strs(s1: str, s2: str) -> float:
     """Similarity score between two strings
-    :param s1: string
-    :param s2: string
+    :param s1: string 1
+    :param s2: string 2
     :return: similarity score
     """
     u = 'https://w-1.test.betawm.com/athena/semantic_similarity'
@@ -364,7 +364,7 @@ def drop_useless_char_in_str(s: str) -> str:
 
 def do_specific_operations_on_list(los: [str]) -> [str]:
     """Do some specific operations on a list
-    :param los: list of string
+    :param los: the list of string
     :return: list of string after operations
     """
     los = [s.replace('nan', '') for s in los]
@@ -374,7 +374,7 @@ def do_specific_operations_on_list(los: [str]) -> [str]:
 
 def process_unnamed_string_in_list(los: [str]) -> [str]:
     """Process unnamed string in a list
-    :param: list of strings
+    :param: the list of strings
     :return: list of strings
     """
     count = 0
@@ -403,7 +403,7 @@ def process_1_unnamed_in_list(los: [str]) -> [str]:
 
 def process_2_unnamed_in_list(los: [str]) -> [str]:
     """Process a list that the number of elements containing 'Unnamed' is 2
-    :param los: list of string
+    :param los: the list of string
     :return: list of string
     """
     if sum([s.count('Unnamed') for s in los[-2:]]) == 2:
@@ -415,7 +415,7 @@ def process_2_unnamed_in_list(los: [str]) -> [str]:
 
 def process_3_unnamed_in_list(los: [str]) -> [str]:
     """Process a list that the number of elements containing 'Unnamed' is 3
-    :param los: list of string
+    :param los: the list of string
     :return: list of string
     """
     if sum([s.count('Unnamed') for s in los[-3:]]) == 3:
@@ -437,7 +437,7 @@ def do_specific_operations_on_last_df(dfs: [pd.DataFrame]) -> [pd.DataFrame]:
 
 def convert_float_str_to_int_str(series: pd.Series) -> pd.Series:
     """Convert float string to int string
-    :param series: pandas Series
+    :param series: pandas Series before conversion
     :return: pandas Series after conversion
     """
     los = series.to_list()

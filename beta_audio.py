@@ -22,7 +22,7 @@ WAV_EXTENSION = '.wav'
 def replace_ext_to_txt(name: str) -> str:
     """Replace the file extension to .txt
     :param name: original file name
-    :return: file name whose extension replaced with .txt
+    :return: the file name whose extension replaced with .txt
     """
     return name.replace(name.rsplit('.', 1)[1], 'txt')
 
@@ -32,7 +32,7 @@ def get_amr_audio(url: str, file_name: str, file_dir: str) -> str:
     :param url: the url redirecting to audio file storage
     :param file_name: the audio file name (assuming without extension)
     :param file_dir: the directory to save audio file
-    :return: audio file path
+    :return: the audio file path
     """
     if file_name and not file_name.endswith(AMR_EXTENSION):
         file_name += AMR_EXTENSION
@@ -257,7 +257,7 @@ def visualize_mfcc_series(features: np.ndarray):
 
 def visualize_spectrograms(file_path: str):
     """Visualize spectrograms of an audio file
-    :param file_path: audio file path
+    :param file_path: the audio file path
     """
     y, sr = librosa.load(file_path, sr=None)
     plt.figure(figsize=(11, 8))

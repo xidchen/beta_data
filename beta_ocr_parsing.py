@@ -71,7 +71,7 @@ def parse_table_result(t_result: {}) -> pd.DataFrame:
 
 def drop_useless_char_in_df(df: pd.DataFrame) -> pd.DataFrame:
     """Remove unnecessary characters in a pandas DataFrame
-    :param df: pandas DataFrame
+    :param df: the pandas DataFrame
     :return pandas DataFrame
     """
     df = df.replace('\n', ' ', regex=True)

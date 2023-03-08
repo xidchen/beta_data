@@ -28,7 +28,7 @@ def get_query_entity(query: str,
                      e_name_to_code: {},
                      e_code_to_name: {}) -> [{}]:
     """Get entity code, text and type from positions of entities in the query
-    :param query: the query
+    :param query: the input query
     :param verbose: whether to print extension information
     :param entities: list of start, end positions and type of entities
     :param e_name_to_code: dict of entity name to code

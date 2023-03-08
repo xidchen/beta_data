@@ -188,7 +188,7 @@ def is_cjk_character(char: str) -> bool:
 
 def drop_unnecessary_whitespace(sentence: str) -> str:
     """Remove unnecessary whitespace in a sentence
-    :param sentence: the sentence
+    :param sentence: the input sentence
     :return: the sentence without unnecessary whitespace
     """
     whitespace = ' '
